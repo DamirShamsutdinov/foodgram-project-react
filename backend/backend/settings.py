@@ -140,9 +140,10 @@ DJOSER = {
     'PERMISSIONS': {
         'user_list': ['rest_framework.permissions.AllowAny'],
         'user_create': ['rest_framework.permissions.AllowAny'],
-        'user': ['rest_framework.permissions.AllowAny'],
+        'user': ['rest_framework.permissions.IsAuthenticated'],
         'current_user': ['rest_framework.serializers.CurrentUser'],
-    }
+    },
+    'HIDE_USERS': False
 }
 
 AUTH_USER_MODEL = 'users.CustomUser'
