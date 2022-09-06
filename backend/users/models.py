@@ -1,5 +1,5 @@
 from django.contrib.auth.models import AbstractUser
-from django.db.models import CharField
+from django.db.models import CharField, UniqueConstraint
 from django.db import models
 from pkg_resources import _
 
@@ -25,16 +25,22 @@ class CustomUser(AbstractUser):
 
 class Subscription(models.Model):
     """Подписка на других авторов рецепта"""
+    user = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='follower',
+        verbose_name='Подписчик'
+    )
     author = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE,
-        related_name='author'
+        related_name='following',
+        verbose_name=''
     )
-    follower = models.ForeignKey(
-        CustomUser,
-        on_delete=models.CASCADE,
-        related_name='follower'
-    )
+    constraints = [UniqueConstraint(
+        fields=['user', 'author'],
+        name='unique_subscription')
+    ]
 
     def __str__(self):
-        return f'Пользователь {self.author}, подписался на {self.follower}'
+        return f'Пользователь {self.user}, подписался на {self.author}'
