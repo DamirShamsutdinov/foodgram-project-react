@@ -1,12 +1,24 @@
+from datetime import datetime
+from http import HTTPStatus
+
+from django.db.models import Sum
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
 from rest_framework.mixins import RetrieveModelMixin, ListModelMixin
+from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.status import HTTP_400_BAD_REQUEST
 
 from api.filters import RecipeFilter
 from api.permissions import IsUserSuperuserOrReadOnly
 from api.serializers import TagsSerializer, \
-    IngredientsSerializer, GetRecipesSerializer, CreateRecipesSerializer
-from recipes.models import Tags, Ingredients, Recipes
+    IngredientsSerializer, GetRecipesSerializer, \
+    CreateRecipesSerializer
+from recipes.models import Tags, Ingredients, Recipes, Favorite, ShoppingList, \
+    AmountIngredients
 
 
 class TagsViewSet(ListModelMixin, RetrieveModelMixin, viewsets.GenericViewSet):
@@ -34,11 +46,15 @@ class RecipesViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     # filterset_class = RecipeFilter
 
+    def perform_create(self, serializer):
+        return serializer.save(author=self.request.user)
+
+    def perform_update(self, serializer):
+        return serializer.save(author=self.request.user)
+
     def get_serializer_class(self):
         if self.request.method in ('POST', 'PATCH', 'DELETE'):
             return CreateRecipesSerializer
         return GetRecipesSerializer
-
-
 
 
