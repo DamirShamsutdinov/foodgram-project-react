@@ -47,9 +47,10 @@ class RecipesViewSet(viewsets.ModelViewSet):
     # filterset_class = RecipeFilter
 
     def get_serializer_class(self):
-        if self.request.method in ('POST', 'PATCH', 'DELETE'):
-            return CreateRecipesSerializer
-        return GetRecipesSerializer
+        if self.request.method == 'GET':
+            return GetRecipesSerializer
+        return CreateRecipesSerializer
+
 
     def perform_create(self, serializer):
         return serializer.save(author=self.request.user)

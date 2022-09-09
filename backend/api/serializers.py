@@ -67,7 +67,7 @@ class IngredientsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Ingredients
-        fields = ("id", "name", "measurement_unit", "amount")
+        fields = ("id", "name", "measurement_unit")
 
 
 class AllIngredientsSerializer(serializers.ModelSerializer):
@@ -138,12 +138,17 @@ class GetRecipesSerializer(serializers.ModelSerializer):
         queryset = AmountIngredients.objects.filter(recipe=obj)
         return AllIngredientsSerializer(queryset, many=True).data
 
+    def to_representation(self, objects):
+        data = super().to_representation(objects)
+        data["image"] = objects.image.url
+        return data
+
 
 class CreateRecipesSerializer(serializers.ModelSerializer):
     """Создание/обновление/удаление Сериализатор Рецептов"""
     author = ListDetailUserSerializer(read_only=True)
     ingredients = AmountRecipeSerializer(
-        # source='amountingredients',
+        source='amountingredients_set',
         many=True
     )
     tags = serializers.PrimaryKeyRelatedField(
@@ -199,38 +204,32 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
         return value
 
     @staticmethod
-    def add_ingredients(ingredients, recipe):
+    def add_ingredients_tags(ingredients, recipe, tags):
         for ingredient in ingredients:
-            ingredient_id = ingredient['id']
             amount = ingredient['amount']
             if AmountIngredients.objects.filter(
-                    recipe=recipe, ingredients=ingredient_id).exists():
+                    recipe=recipe,
+                    ingredients=ingredients['id']
+            ).exists():
                 amount += F('amount')
             AmountIngredients.objects.update_or_create(
-                recipe=recipe, ingredients=ingredient_id,
+                recipe=recipe,
+                ingredients=ingredients['id'],
                 defaults={'amount': amount}
             )
+        for tag in tags:
+            recipe.tags.add(tag)
+            TagsRecipes.objects.create(
+                    tag=tag,
+                    recipe=recipe,
+                )
 
     def create(self, validated_data):
         print(f'!!!{validated_data}!!!')
         tags = validated_data.pop("tags")
         ingredients = validated_data.pop("ingredients")
         recipe = Recipes.objects.create(**validated_data)
-        self.add_ingredients(ingredients, recipe)
-        for ingredient in ingredients:
-            current_ingredient = Ingredients.objects.get(**ingredient)
-            AmountIngredients.objects.create(
-                ingredients=current_ingredient,
-                recipe=recipe,
-                amount=ingredient['amount']
-            )
-        for tag in tags:
-            current_tag = Tags.objects.get(**tag)
-            TagsRecipes.objects.create(
-                tag=current_tag,
-                recipe=recipe,
-            )
-        # recipe.tags.set(tags)
+        self.add_ingredients_tags(ingredients, recipe, tags)
         return recipe
 
     def update(self, recipe, validated_data):
@@ -238,30 +237,8 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
         TagsRecipes.objects.filter(recipe=recipe).delete()
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
-        self.add_ingredients(ingredients, recipe)
-        for ingredient in ingredients:
-            current_ingredient = Ingredients.objects.get(**ingredient)
-            AmountIngredients.objects.create(
-                ingredients=current_ingredient,
-                recipe=recipe,
-                amount=current_ingredient['amount']
-            )
-        for tag in tags:
-            current_tag = Tags.objects.get(**tag)
-            TagsRecipes.objects.create(
-                tag=current_tag,
-                recipe=recipe,
-            )
-        # recipe.tags.set(tags)
+        self.add_ingredients_tags(ingredients, recipe, tags)
         return super().update(recipe, validated_data)
-
-    # def to_representation(self, recipe):
-    #     request = self.context.get('request')
-    #     data = GetRecipesSerializer(
-    #         recipe,
-    #         context={'request': request}
-    #     ).data
-    #     return data
 
     def to_representation(self, objects):
         data = super().to_representation(objects)
