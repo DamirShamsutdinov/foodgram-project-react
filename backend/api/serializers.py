@@ -67,10 +67,22 @@ class IngredientsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Ingredients
-        fields = ("id", "name", "measurement_unit")
+        fields = ("id", "name", "measurement_unit", "amount")
 
 
-class IngredientsInRecipeSerializer(serializers.ModelSerializer):
+class AllIngredientsSerializer(serializers.ModelSerializer):
+    id = serializers.ReadOnlyField(source="ingredients.id")
+    name = serializers.ReadOnlyField(source="ingredients.name")
+    measurement_unit = serializers.ReadOnlyField(
+        source="ingredients.measurement_unit"
+    )
+
+    class Meta:
+        model = AmountIngredients
+        fields = ("id", "name", "measurement_unit", "amount")
+
+
+class AmountRecipeSerializer(serializers.ModelSerializer):
     """Сериализатор модели Ингредиенты_Рецепта"""
     id = serializers.PrimaryKeyRelatedField(queryset=Ingredients.objects.all())
 
@@ -81,10 +93,7 @@ class IngredientsInRecipeSerializer(serializers.ModelSerializer):
 
 class GetRecipesSerializer(serializers.ModelSerializer):
     """GET Сериализатор Рецептов"""
-    tags = serializers.PrimaryKeyRelatedField(
-        queryset=Tags.objects.all(),
-        many=True
-    )
+    tags = TagsSerializer(many=True)
     author = ListDetailUserSerializer(read_only=True)
     ingredients = serializers.SerializerMethodField(read_only=True)
     is_favorited = serializers.SerializerMethodField(read_only=True)
@@ -108,8 +117,7 @@ class GetRecipesSerializer(serializers.ModelSerializer):
         )
         ordering = ("-published",)
 
-
-    def get_is_in_favorite(self, object):
+    def get_is_favorited(self, object):
         """Рецепт в избранном"""
         user_id = self.context.get('request').user.id
         return Favorite.objects.filter(
@@ -117,7 +125,7 @@ class GetRecipesSerializer(serializers.ModelSerializer):
             recipe=object.id
         ).exists()
 
-    def get_is_in_shoping_cart(self, object):
+    def get_is_in_shopping_cart(self, object):
         """Ингредиенты_Рецепта в корзине"""
         user_id = self.context.get('request').user.id
         return ShoppingList.objects.filter(
@@ -128,13 +136,13 @@ class GetRecipesSerializer(serializers.ModelSerializer):
     @staticmethod
     def get_ingredients(obj):
         queryset = AmountIngredients.objects.filter(recipe=obj)
-        return IngredientsInRecipeSerializer(queryset, many=True).data
+        return AllIngredientsSerializer(queryset, many=True).data
 
 
 class CreateRecipesSerializer(serializers.ModelSerializer):
     """Создание/обновление/удаление Сериализатор Рецептов"""
     author = ListDetailUserSerializer(read_only=True)
-    ingredients = IngredientsInRecipeSerializer(
+    ingredients = AmountRecipeSerializer(
         # source='amountingredients',
         many=True
     )
@@ -214,7 +222,7 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
             AmountIngredients.objects.create(
                 ingredients=current_ingredient,
                 recipe=recipe,
-                amount=current_ingredient['amount']
+                amount=ingredient['amount']
             )
         for tag in tags:
             current_tag = Tags.objects.get(**tag)
