@@ -1,6 +1,6 @@
 from django.contrib.auth.models import AbstractUser
-from django.db.models import CharField, UniqueConstraint
 from django.db import models
+from django.db.models import CharField, UniqueConstraint
 from pkg_resources import _
 
 
@@ -23,24 +23,29 @@ class CustomUser(AbstractUser):
         return self.email
 
 
-class Subscription(models.Model):
-    """Подписка на других авторов рецепта"""
+class Follow(models.Model):
+    """модель Подписок"""
     user = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE,
-        related_name='follower',
-        verbose_name='Подписчик'
+        related_name="follower",
+        verbose_name="Юзер",
     )
     author = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE,
-        related_name='following',
-        verbose_name=''
+        related_name="following",
+        verbose_name="Автор_рецепта"
     )
-    constraints = [UniqueConstraint(
-        fields=['user', 'author'],
-        name='unique_subscription')
-    ]
+
+    class Meta:
+        verbose_name = "Подписка_рецепты"
+        constraints = [
+            UniqueConstraint(
+                fields=["user", "author"],
+                name="unique_follow")
+        ]
 
     def __str__(self):
-        return f'Пользователь {self.user}, подписался на {self.author}'
+        return f'Пользователь {self.user} подписан на {self.author}'
+

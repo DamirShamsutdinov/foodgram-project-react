@@ -1,41 +1,12 @@
 from django.db.models import F
-from rest_framework import serializers
 from django.utils import timezone
-from rest_framework.exceptions import ValidationError
-from rest_framework.generics import get_object_or_404
-
-from api.validations import validate_tags, validate_ingredients
-from recipes.models import Tags, Ingredients, Favorite, ShoppingList, Recipes, \
-    AmountIngredients, TagsRecipes
-from users.models import Subscription, CustomUser
-
 from drf_extra_fields.fields import Base64ImageField
+from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
-
-class ListDetailUserSerializer(serializers.ModelSerializer):
-    """Сериализатор модели Юзер GET запрос."""
-    is_subscribed = serializers.SerializerMethodField()
-
-    class Meta:
-        model = CustomUser
-        fields = (
-            "email",
-            "id",
-            "username",
-            "first_name",
-            "last_name",
-            "is_subscribed"
-        )
-
-    def get_is_subscribed(self, obj):
-        """Проверка 'subscribed' на наличие подписок"""
-        request = self.context.get('request')
-        if request is None or request.user.is_anonymous:
-            return False
-        return Subscription.objects.filter(
-            user=request.user,
-            author=obj.id
-        ).exists()
+from recipes.models import (AmountIngredients, Favorite, Ingredients, Recipes,
+                            ShoppingList, Tags, TagsRecipes)
+from users.serializers import ListDetailUserSerializer
 
 
 class TagsSerializer(serializers.ModelSerializer):
@@ -91,6 +62,14 @@ class AmountRecipeSerializer(serializers.ModelSerializer):
         fields = ("id", "amount")
 
 
+class SupportRecipesSerializer(serializers.ModelSerializer):
+    """Сериализатор рецепта для добавления в Избранное"""
+
+    class Meta:
+        model = Recipes
+        fields = ('id', 'name', 'image', 'cooking_time')
+
+
 class GetRecipesSerializer(serializers.ModelSerializer):
     """GET Сериализатор Рецептов"""
     tags = TagsSerializer(many=True)
@@ -117,20 +96,20 @@ class GetRecipesSerializer(serializers.ModelSerializer):
         )
         ordering = ("-published",)
 
-    def get_is_favorited(self, object):
+    def get_is_favorited(self, obj):
         """Рецепт в избранном"""
         user_id = self.context.get('request').user.id
         return Favorite.objects.filter(
             user=user_id,
-            recipe=object.id
+            recipe=obj.id
         ).exists()
 
-    def get_is_in_shopping_cart(self, object):
+    def get_is_in_shopping_cart(self, obj):
         """Ингредиенты_Рецепта в корзине"""
         user_id = self.context.get('request').user.id
         return ShoppingList.objects.filter(
             user=user_id,
-            recipe=object.id
+            recipe=obj.id
         ).exists()
 
     @staticmethod
@@ -138,19 +117,16 @@ class GetRecipesSerializer(serializers.ModelSerializer):
         queryset = AmountIngredients.objects.filter(recipe=obj)
         return AllIngredientsSerializer(queryset, many=True).data
 
-    def to_representation(self, objects):
-        data = super().to_representation(objects)
-        data["image"] = objects.image.url
+    def to_representation(self, obj):
+        data = super().to_representation(obj)
+        data["image"] = obj.image.url
         return data
 
 
 class CreateRecipesSerializer(serializers.ModelSerializer):
     """Создание/обновление/удаление Сериализатор Рецептов"""
     author = ListDetailUserSerializer(read_only=True)
-    ingredients = AmountRecipeSerializer(
-        source='amountingredients_set',
-        many=True
-    )
+    ingredients = AmountRecipeSerializer(many=True)
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tags.objects.all(),
         many=True
@@ -172,24 +148,20 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
             "published"
         )
 
-    def validate_ingredients(self, value):
-        ingredients = value
-        if not ingredients:
-            raise ValidationError({
-                'ingredients': 'Необходимо добавить ингредиенты!'
-            })
+    def validate(self, data):
+        ingredients = data['ingredients']
         ingredients_list = []
-        for item in ingredients:
-            ingredient = get_object_or_404(Ingredients, id=item['id'])
-            if ingredient in ingredients_list:
+        for ingredient in ingredients:
+            if ingredient['id'] in ingredients_list:
+                raise serializers.ValidationError(
+                    {'ingredients': 'Ингредиенты в рецепте уникальны!'}
+                )
+                ingredients_list.append(ingredient['id'])
+            if ingredient['amount'] <= 0:
                 raise ValidationError({
-                    'ingredients': 'Ингридиенты не повторяются!'
+                    'ingredients': 'Необходимо добавить ингредиенты!'
                 })
-            ingredients_list.append(ingredient)
-        return value
-
-    def validate_tags(self, value):
-        tags = value
+        tags = data['tags']
         if not tags:
             raise ValidationError({
                 'tags': 'Необходимо добавить тег!'
@@ -198,39 +170,41 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
         for tag in tags:
             if tag in tags_list:
                 raise ValidationError({
-                    'tags': 'Теги не повторяются!'
+                    'tags': 'Теги для рецепта уникальны!'
                 })
             tags_list.append(tag)
-        return value
+        return data
 
     @staticmethod
     def add_ingredients_tags(ingredients, recipe, tags):
         for ingredient in ingredients:
-            amount = ingredient['amount']
-            if AmountIngredients.objects.filter(
-                    recipe=recipe,
-                    ingredients=ingredients['id']
-            ).exists():
-                amount += F('amount')
+            # amount = ingredient['amount']
+            # if AmountIngredients.objects.filter(
+            #         recipe=recipe,
+            #         ingredients=ingredients['id']
+            # ).exists():
+            #     amount += F('amount')
             AmountIngredients.objects.update_or_create(
                 recipe=recipe,
-                ingredients=ingredients['id'],
-                defaults={'amount': amount}
+                ingredients=ingredient['id'],
+                amount=ingredient['amount']
+                # defaults={'amount': amount}
             )
         for tag in tags:
             recipe.tags.add(tag)
-            TagsRecipes.objects.create(
-                    tag=tag,
-                    recipe=recipe,
-                )
 
     def create(self, validated_data):
         print(f'!!!{validated_data}!!!')
         tags = validated_data.pop("tags")
-        ingredients = validated_data.pop("ingredients")
+        ingredients = validated_data.pop('ingredients')
         recipe = Recipes.objects.create(**validated_data)
         self.add_ingredients_tags(ingredients, recipe, tags)
         return recipe
+
+    def to_representation(self, instance):
+        request = self.context.get('request')
+        context = {'request': request}
+        return GetRecipesSerializer(instance, context=context).data
 
     def update(self, recipe, validated_data):
         AmountIngredients.objects.filter(recipe=recipe).delete()
@@ -240,9 +214,14 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
         self.add_ingredients_tags(ingredients, recipe, tags)
         return super().update(recipe, validated_data)
 
-    def to_representation(self, objects):
-        data = super().to_representation(objects)
-        data["image"] = objects.image.url
-        return data
+    def to_representation(self, instance):
+        request = self.context.get('request')
+        context = {'request': request}
+        return GetRecipesSerializer(instance, context=context).data
 
-# class SubscriptionSerializer(serializers.ModelSerializer):
+    # закоментировал для проверки,
+    # пока работает когда меняю метод после создания/обновления
+    # def to_representation(self, objects):
+    #     data = super().to_representation(objects)
+    #     data["image"] = objects.image.url
+    #     return data

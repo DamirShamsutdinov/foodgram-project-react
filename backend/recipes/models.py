@@ -55,6 +55,7 @@ class Ingredients(models.Model):
     def __str__(self):
         return f'{self.name}, {self.measurement_unit}'
 
+
 class Recipes(models.Model):
     """модели Рецептов"""
     author = models.ForeignKey(
@@ -70,6 +71,7 @@ class Recipes(models.Model):
     )
     image = models.ImageField(
         upload_to="images",
+        null=False,
         verbose_name="Картинка_блюда",
     )
     text = models.TextField(
