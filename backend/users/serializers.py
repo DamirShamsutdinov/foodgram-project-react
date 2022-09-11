@@ -38,6 +38,7 @@ class SupportRecipesSerializer(serializers.ModelSerializer):
 
 class SubscribeSerializer(serializers.ModelSerializer):
     """Сериализатор Подписок"""
+    is_subscribed = serializers.SerializerMethodField()
     recipes = serializers.SerializerMethodField(read_only=True)
     recipes_count = serializers.SerializerMethodField(read_only=True)
 
@@ -54,12 +55,20 @@ class SubscribeSerializer(serializers.ModelSerializer):
             "recipes_count"
         )
 
+    def get_is_subscribed(self, obj):
+        """Проверка на наличие подписок"""
+        user = self.context.get('request').user
+        if user is None or user.is_anonymous:
+            return False
+        return Follow.objects.filter(user=user, author=obj.id).exists()
+
     def get_recipes(self, obj):
         """Рецепты автора"""
         recipes = obj.recipes.all()
         return SupportRecipesSerializer(recipes, many=True).data
 
-    @staticmethod
-    def get_recipes_count(obj):
+    def get_recipes_count(self, obj):
         """Кол-во рецептов"""
-        return obj.recipes.count()
+        author = obj.id
+        queryset = Recipes.objects.filter(author=author).count()
+        return queryset
