@@ -6,7 +6,7 @@ from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path("admin/", admin.site.urls),
     path("api/", include("api.urls")),
 ]
 
@@ -14,7 +14,7 @@ urlpatterns = [
 schema_view = get_schema_view(
    openapi.Info(
       title="foodgram API",
-      default_version='v1',
+      default_version="v1",
       description="Документация для проекта backend 'foodgram API'",
       # terms_of_service="URL страницы с пользовательским соглашением",
       contact=openapi.Contact(email="markopolo@gmail.com"),
@@ -25,10 +25,10 @@ schema_view = get_schema_view(
 )
 
 urlpatterns += [
-   url(r'^swagger(?P<format>\.json|\.yaml)$',
-       schema_view.without_ui(cache_timeout=0), name='schema-json'),
-   url(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0),
-       name='schema-swagger-ui'),
-   url(r'^redoc/$', schema_view.with_ui('redoc', cache_timeout=0),
-       name='schema-redoc'),
+   url(r"^swagger(?P<format>\.json|\.yaml)$",
+       schema_view.without_ui(cache_timeout=0), name="schema-json"),
+   url(r"^swagger/$", schema_view.with_ui("swagger", cache_timeout=0),
+       name="schema-swagger-ui"),
+   url(r"^redoc/$", schema_view.with_ui("redoc", cache_timeout=0),
+       name="schema-redoc"),
 ]

@@ -67,7 +67,7 @@ class SupportRecipesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Recipes
-        fields = ('id', 'name', 'image', 'cooking_time')
+        fields = ("id", "name", "image", "cooking_time")
 
 
 class GetRecipesSerializer(serializers.ModelSerializer):
@@ -98,7 +98,7 @@ class GetRecipesSerializer(serializers.ModelSerializer):
 
     def get_is_favorited(self, obj):
         """Рецепт в избранном"""
-        user_id = self.context.get('request').user.id
+        user_id = self.context.get("request").user.id
         return Favorite.objects.filter(
             user=user_id,
             recipe=obj.id
@@ -106,7 +106,7 @@ class GetRecipesSerializer(serializers.ModelSerializer):
 
     def get_is_in_shopping_cart(self, obj):
         """Ингредиенты_Рецепта в корзине"""
-        user_id = self.context.get('request').user.id
+        user_id = self.context.get("request").user.id
         return ShoppingList.objects.filter(
             user=user_id,
             recipe=obj.id
@@ -149,28 +149,28 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, data):
-        ingredients = data['ingredients']
+        ingredients = data["ingredients"]
         ingredients_list = []
         for ingredient in ingredients:
-            if ingredient['id'] in ingredients_list:
+            if ingredient["id"] in ingredients_list:
                 raise serializers.ValidationError(
-                    {'ingredients': 'Ингредиенты в рецепте уникальны!'}
+                    {"ingredients": "Ингредиенты в рецепте уникальны!"}
                 )
-                ingredients_list.append(ingredient['id'])
-            if ingredient['amount'] <= 0:
+                ingredients_list.append(ingredient["id"])
+            if ingredient["amount"] <= 0:
                 raise ValidationError({
-                    'ingredients': 'Необходимо добавить ингредиенты!'
+                    "ingredients": "Необходимо добавить ингредиенты!"
                 })
-        tags = data['tags']
+        tags = data["tags"]
         if not tags:
             raise ValidationError({
-                'tags': 'Необходимо добавить тег!'
+                "tags": "Необходимо добавить тег!"
             })
         tags_list = []
         for tag in tags:
             if tag in tags_list:
                 raise ValidationError({
-                    'tags': 'Теги для рецепта уникальны!'
+                    "tags": "Теги для рецепта уникальны!"
                 })
             tags_list.append(tag)
         return data
@@ -178,45 +178,45 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
     @staticmethod
     def add_ingredients_tags(ingredients, recipe, tags):
         for ingredient in ingredients:
-            # amount = ingredient['amount']
+            # amount = ingredient["amount"]
             # if AmountIngredients.objects.filter(
             #         recipe=recipe,
-            #         ingredients=ingredients['id']
+            #         ingredients=ingredients["id"]
             # ).exists():
-            #     amount += F('amount')
+            #     amount += F("amount")
             AmountIngredients.objects.update_or_create(
                 recipe=recipe,
-                ingredients=ingredient['id'],
-                amount=ingredient['amount']
-                # defaults={'amount': amount}
+                ingredients=ingredient["id"],
+                amount=ingredient["amount"]
+                # defaults={"amount": amount}
             )
         for tag in tags:
             recipe.tags.add(tag)
 
     def create(self, validated_data):
-        print(f'!!!{validated_data}!!!')
+        print(f"!!!{validated_data}!!!")
         tags = validated_data.pop("tags")
-        ingredients = validated_data.pop('ingredients')
+        ingredients = validated_data.pop("ingredients")
         recipe = Recipes.objects.create(**validated_data)
         self.add_ingredients_tags(ingredients, recipe, tags)
         return recipe
 
     def to_representation(self, instance):
-        request = self.context.get('request')
-        context = {'request': request}
+        request = self.context.get("request")
+        context = {"request": request}
         return GetRecipesSerializer(instance, context=context).data
 
     def update(self, recipe, validated_data):
         AmountIngredients.objects.filter(recipe=recipe).delete()
         TagsRecipes.objects.filter(recipe=recipe).delete()
-        tags = validated_data.pop('tags')
-        ingredients = validated_data.pop('ingredients')
+        tags = validated_data.pop("tags")
+        ingredients = validated_data.pop("ingredients")
         self.add_ingredients_tags(ingredients, recipe, tags)
         return super().update(recipe, validated_data)
 
     def to_representation(self, instance):
-        request = self.context.get('request')
-        context = {'request': request}
+        request = self.context.get("request")
+        context = {"request": request}
         return GetRecipesSerializer(instance, context=context).data
 
     # закоментировал для проверки,

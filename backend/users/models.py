@@ -6,9 +6,9 @@ from pkg_resources import _
 
 class CustomUser(AbstractUser):
     """Модель Пользователя"""
-    password = CharField(_('password'), max_length=150)
-    email = models.EmailField(_('email address'), blank=True, unique=True)
-    USERNAME_FIELD = 'email'
+    password = CharField(_("password"), max_length=150)
+    email = models.EmailField(_("email address"), blank=True, unique=True)
+    USERNAME_FIELD = "email"
 
     REQUIRED_FIELDS = [
         "username",
@@ -47,5 +47,5 @@ class Follow(models.Model):
         ]
 
     def __str__(self):
-        return f'Пользователь {self.user} подписан на {self.author}'
+        return f"Пользователь {self.user} подписан на {self.author}"
 

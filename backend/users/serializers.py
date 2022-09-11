@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
-
 from recipes.models import Recipes
+
 from .models import CustomUser, Follow
 
 
@@ -22,7 +22,7 @@ class ListDetailUserSerializer(serializers.ModelSerializer):
 
     def get_is_subscribed(self, obj):
         """Проверка на наличие подписок"""
-        user = self.context.get('request').user
+        user = self.context.get("request").user
         if user is None or user.is_anonymous:
             return False
         return Follow.objects.filter(user=user, author=obj.id).exists()
@@ -33,7 +33,7 @@ class SupportRecipesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Recipes
-        fields = ('id', 'name', 'image', 'cooking_time')
+        fields = ("id", "name", "image", "cooking_time")
 
 
 class SubscribeSerializer(serializers.ModelSerializer):
@@ -57,7 +57,7 @@ class SubscribeSerializer(serializers.ModelSerializer):
 
     def get_is_subscribed(self, obj):
         """Проверка на наличие подписок"""
-        user = self.context.get('request').user
+        user = self.context.get("request").user
         if user is None or user.is_anonymous:
             return False
         return Follow.objects.filter(user=user, author=obj.id).exists()
