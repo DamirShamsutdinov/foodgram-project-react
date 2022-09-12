@@ -11,6 +11,7 @@ class UserAdmin(admin.ModelAdmin):
         "username",
         "first_name",
         "last_name",
+        "password"
     )
     search_fields = ("username",)
     empty_value_display = "-пусто-"

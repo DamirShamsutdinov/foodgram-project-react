@@ -12,7 +12,7 @@ router.register("recipes", RecipesViewSet, basename="recipes")
 urlpatterns = [
     path(
         "users/subscriptions/",
-         SubscribeListView.as_view(),
+        SubscribeListView.as_view(),
         name="subscriptions"
     ),
     path(

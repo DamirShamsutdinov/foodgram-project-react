@@ -1,4 +1,3 @@
-from django.db.models import F
 from django.utils import timezone
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
@@ -178,17 +177,10 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
     @staticmethod
     def add_ingredients_tags(ingredients, recipe, tags):
         for ingredient in ingredients:
-            # amount = ingredient["amount"]
-            # if AmountIngredients.objects.filter(
-            #         recipe=recipe,
-            #         ingredients=ingredients["id"]
-            # ).exists():
-            #     amount += F("amount")
             AmountIngredients.objects.update_or_create(
                 recipe=recipe,
                 ingredients=ingredient["id"],
                 amount=ingredient["amount"]
-                # defaults={"amount": amount}
             )
         for tag in tags:
             recipe.tags.add(tag)
@@ -200,11 +192,6 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
         recipe = Recipes.objects.create(**validated_data)
         self.add_ingredients_tags(ingredients, recipe, tags)
         return recipe
-
-    def to_representation(self, instance):
-        request = self.context.get("request")
-        context = {"request": request}
-        return GetRecipesSerializer(instance, context=context).data
 
     def update(self, recipe, validated_data):
         AmountIngredients.objects.filter(recipe=recipe).delete()

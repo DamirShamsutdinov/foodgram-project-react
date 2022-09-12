@@ -1,19 +1,14 @@
-from datetime import datetime
-from http import HTTPStatus
-
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import mixins, status, viewsets
-from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
 from rest_framework.generics import ListAPIView
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
-from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.status import HTTP_400_BAD_REQUEST
 from rest_framework.views import APIView
-from rest_framework.viewsets import GenericViewSet
 
 from api.filters import RecipeFilter
 from api.permissions import IsUserSuperuserOrReadOnly
@@ -81,7 +76,6 @@ class RecipesViewSet(viewsets.ModelViewSet):
     def favorite(self, request, pk=None):
         """Удаление и добавление рецептов в Избранное"""
         user = request.user
-
         if request.method == "POST":
             recipe = get_object_or_404(Recipes, pk=pk)
             relation = Favorite.objects.filter(user=user, recipe=recipe)
@@ -93,7 +87,6 @@ class RecipesViewSet(viewsets.ModelViewSet):
             Favorite.objects.create(user=user, recipe=recipe)
             serializer = SupportRecipesSerializer(recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-
         if request.method == "DELETE":
             recipe = get_object_or_404(Recipes, pk=pk)
             relation = Favorite.objects.filter(user=user, recipe=recipe)
@@ -104,8 +97,51 @@ class RecipesViewSet(viewsets.ModelViewSet):
                 )
             relation.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    @action(detail=True, methods=["post", "delete"], url_path="shopping_cart")
+    def shopping_cart(self, request, pk=None):
+        """Удаление и добавление рецептов в Покупки"""
+        user = request.user
+        if request.method == "POST":
+            recipe = get_object_or_404(Recipes, pk=pk)
+            relation = ShoppingList.objects.filter(user=user, recipe=recipe)
+            if relation.exists():
+                return Response(
+                    "Уже есть в списке Покупок!",
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            ShoppingList.objects.create(user=user, recipe=recipe)
+            serializer = SupportRecipesSerializer(recipe)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        if request.method == "DELETE":
+            recipe = get_object_or_404(Recipes, pk=pk)
+            relation = ShoppingList.objects.filter(user=user, recipe=recipe)
+            if not relation.exists():
+                return Response(
+                    "Нет в списке покупок!",
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            relation.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    @action(detail=False, methods=["get"], url_path="download_shopping_cart")
+    def download_shopping_cart(self, request):
+        ingredients = AmountIngredients.objects.filter(
+            recipe__shoppinglist__user=request.user).values(
+            'ingredients__name', 'ingredients__measurement_unit').annotate(
+            amount=Sum('amount'))
+        shopping_cart = '\n'.join([
+            f'{i["ingredients__name"]} '
+            f'({i["ingredients__measurement_unit"]}) – '
+            f'{i["amount"]}'
+            for i in ingredients
+        ])
+        response = HttpResponse(shopping_cart, content_type='text/plain')
+        response['Content-Disposition'] = (
+            'attachment; filename=shopping_cart.txt')
+        return response
 
 
 class SubscribeListView(ListAPIView):
