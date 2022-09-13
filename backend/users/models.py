@@ -1,20 +1,16 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.db.models import CharField, UniqueConstraint
+from django.db.models import UniqueConstraint
+
 from pkg_resources import _
 
 
 class CustomUser(AbstractUser):
     """Модель Пользователя"""
-    password = CharField(_("password"), max_length=150)
     email = models.EmailField(_("email address"), blank=True, unique=True)
     USERNAME_FIELD = "email"
 
-    REQUIRED_FIELDS = [
-        "username",
-        "first_name",
-        "last_name",
-    ]
+    REQUIRED_FIELDS = ("username", "first_name", "last_name")
 
     class Meta:
         ordering = ("id",)
@@ -40,11 +36,11 @@ class Follow(models.Model):
 
     class Meta:
         verbose_name = "Подписка_рецепты"
-        constraints = [
+        constraints = (
             UniqueConstraint(
                 fields=["user", "author"],
                 name="unique_follow")
-        ]
+        )
 
     def __str__(self):
         return f"Пользователь {self.user} подписан на {self.author}"

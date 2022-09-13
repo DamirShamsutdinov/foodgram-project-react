@@ -76,9 +76,9 @@ class RecipesViewSet(viewsets.ModelViewSet):
     def favorite(self, request, pk=None):
         """Удаление и добавление рецептов в Избранное"""
         user = request.user
+        recipe = get_object_or_404(Recipes, pk=pk)
+        relation = Favorite.objects.filter(user=user, recipe=recipe)
         if request.method == "POST":
-            recipe = get_object_or_404(Recipes, pk=pk)
-            relation = Favorite.objects.filter(user=user, recipe=recipe)
             if relation.exists():
                 return Response(
                     "Уже есть в списке Избранных!",
@@ -88,8 +88,6 @@ class RecipesViewSet(viewsets.ModelViewSet):
             serializer = SupportRecipesSerializer(recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == "DELETE":
-            recipe = get_object_or_404(Recipes, pk=pk)
-            relation = Favorite.objects.filter(user=user, recipe=recipe)
             if not relation.exists():
                 return Response(
                     "Нет в избранном!",
@@ -103,9 +101,9 @@ class RecipesViewSet(viewsets.ModelViewSet):
     def shopping_cart(self, request, pk=None):
         """Удаление и добавление рецептов в Покупки"""
         user = request.user
+        recipe = get_object_or_404(Recipes, pk=pk)
+        relation = ShoppingList.objects.filter(user=user, recipe=recipe)
         if request.method == "POST":
-            recipe = get_object_or_404(Recipes, pk=pk)
-            relation = ShoppingList.objects.filter(user=user, recipe=recipe)
             if relation.exists():
                 return Response(
                     "Уже есть в списке Покупок!",
@@ -115,8 +113,6 @@ class RecipesViewSet(viewsets.ModelViewSet):
             serializer = SupportRecipesSerializer(recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == "DELETE":
-            recipe = get_object_or_404(Recipes, pk=pk)
-            relation = ShoppingList.objects.filter(user=user, recipe=recipe)
             if not relation.exists():
                 return Response(
                     "Нет в списке покупок!",

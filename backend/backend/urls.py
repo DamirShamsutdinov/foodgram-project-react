@@ -15,7 +15,6 @@ schema_view = get_schema_view(
         title="foodgram API",
         default_version="v1",
         description="Документация для проекта backend 'foodgram API'",
-        # terms_of_service="URL страницы с пользовательским соглашением",
         contact=openapi.Contact(email="markopolo@gmail.com"),
         license=openapi.License(name="BSD License"),
     ),

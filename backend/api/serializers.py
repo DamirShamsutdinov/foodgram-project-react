@@ -71,11 +71,19 @@ class SupportRecipesSerializer(serializers.ModelSerializer):
 
 class GetRecipesSerializer(serializers.ModelSerializer):
     """GET Сериализатор Рецептов"""
+
+    def checked_queryset(self, obj, Model):
+        user_id = self.context.get("request").user.id
+        return Model.objects.filter(
+            user=user_id,
+            recipe=obj.id
+        ).exists()
+
     tags = TagsSerializer(many=True)
     author = ListDetailUserSerializer(read_only=True)
     ingredients = serializers.SerializerMethodField(read_only=True)
-    is_favorited = serializers.SerializerMethodField(read_only=True)
-    is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
+    is_favorited = checked_queryset(obj, Favorite)
+    is_in_shopping_cart = checked_queryset(obj, ShoppingList)
     published = serializers.HiddenField(default=timezone.now)
 
     class Meta:
@@ -95,21 +103,21 @@ class GetRecipesSerializer(serializers.ModelSerializer):
         )
         ordering = ("-published",)
 
-    def get_is_favorited(self, obj):
-        """Рецепт в избранном"""
-        user_id = self.context.get("request").user.id
-        return Favorite.objects.filter(
-            user=user_id,
-            recipe=obj.id
-        ).exists()
-
-    def get_is_in_shopping_cart(self, obj):
-        """Ингредиенты_Рецепта в корзине"""
-        user_id = self.context.get("request").user.id
-        return ShoppingList.objects.filter(
-            user=user_id,
-            recipe=obj.id
-        ).exists()
+    # def get_is_favorited(self, obj):
+    #     """Рецепт в избранном"""
+    #     user_id = self.context.get("request").user.id
+    #     return Favorite.objects.filter(
+    #         user=user_id,
+    #         recipe=obj.id
+    #     ).exists()
+    #
+    # def get_is_in_shopping_cart(self, obj):
+    #     """Ингредиенты_Рецепта в корзине"""
+    #     user_id = self.context.get("request").user.id
+    #     return ShoppingList.objects.filter(
+    #         user=user_id,
+    #         recipe=obj.id
+    #     ).exists()
 
     @staticmethod
     def get_ingredients(obj):
@@ -186,7 +194,6 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
             recipe.tags.add(tag)
 
     def create(self, validated_data):
-        print(f"!!!{validated_data}!!!")
         tags = validated_data.pop("tags")
         ingredients = validated_data.pop("ingredients")
         recipe = Recipes.objects.create(**validated_data)
@@ -205,10 +212,3 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         context = {"request": request}
         return GetRecipesSerializer(instance, context=context).data
-
-    # закоментировал для проверки,
-    # пока работает когда меняю метод после создания/обновления
-    # def to_representation(self, objects):
-    #     data = super().to_representation(objects)
-    #     data["image"] = objects.image.url
-    #     return data
