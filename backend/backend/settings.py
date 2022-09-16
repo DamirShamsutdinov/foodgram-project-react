@@ -6,6 +6,12 @@ SECRET_KEY = 'enkqe^=t24y4cqry&8j$vnualziuvt8-5jcwzk5mt(i@iuqyvc'
 
 DEBUG = True
 
+# CORS_ORIGIN_ALLOW_ALL = True
+
+CORS_URLS_REGEX = r'^/api/.*$'
+
+CORS_ALLOWED_ORIGINS = ['http://localhost:3000', ]
+
 ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
@@ -17,6 +23,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_filters',
     'rest_framework',
+    'corsheaders',
     'rest_framework.authtoken',
     'djoser',
     'api',
@@ -29,6 +36,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',

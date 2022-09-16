@@ -72,15 +72,6 @@ class SupportRecipesSerializer(serializers.ModelSerializer):
 class GetRecipesSerializer(serializers.ModelSerializer):
     """GET Сериализатор Рецептов"""
 
-    # def checked_queryset(self, obj, Model):
-    #     user_id = self.context.get("request").user.id
-    #     return Model.objects.filter(
-    #         user=user_id,
-    #         recipe=obj.id
-    #     ).exists()
-
-    # is_favorited = checked_queryset(obj, Favorite)
-    # is_in_shopping_cart = checked_queryset(obj, ShoppingList)
     tags = TagsSerializer(many=True)
     author = ListDetailUserSerializer(read_only=True)
     ingredients = serializers.SerializerMethodField(read_only=True)
@@ -105,21 +96,19 @@ class GetRecipesSerializer(serializers.ModelSerializer):
         )
         ordering = ("-published",)
 
-    def get_is_favorited(self, obj):
-        """Рецепт в избранном"""
+    def __checked_queryset(self, model):
         user_id = self.context.get("request").user.id
-        return Favorite.objects.filter(
+        recipe_id = self.context.get("request").recipe.id
+        return model.objects.filter(
             user=user_id,
-            recipe=obj.id
+            recipe=recipe_id
         ).exists()
 
-    def get_is_in_shopping_cart(self, obj):
-        """Ингредиенты_Рецепта в корзине"""
-        user_id = self.context.get("request").user.id
-        return ShoppingList.objects.filter(
-            user=user_id,
-            recipe=obj.id
-        ).exists()
+    def get_is_favorited(self):
+        return self.__checked_queryset(Favorite)
+
+    def get_is_in_shopping_cart(self):
+        return self.__checked_queryset(ShoppingList)
 
     @staticmethod
     def get_ingredients(obj):
