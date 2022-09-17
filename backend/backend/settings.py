@@ -4,7 +4,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 SECRET_KEY = 'enkqe^=t24y4cqry&8j$vnualziuvt8-5jcwzk5mt(i@iuqyvc'
 
-DEBUG = True
+DEBUG = False
 
 # CORS_ORIGIN_ALLOW_ALL = True
 
@@ -29,7 +29,6 @@ INSTALLED_APPS = [
     'api',
     'users',
     'recipes',
-    'drf_yasg',
     'colorfield',
 ]
 
@@ -66,12 +65,12 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'foodgram',
-        'USER': 'postgres',
-        'PASSWORD': 'Industrial',
-        'HOST': '127.0.0.1',
-        'PORT': '5432'
+        'ENGINE': os.getenv('DB_ENGINE', default='django.db.backends.postgresql'),
+        'NAME': os.getenv('DB_NAME', default='postgres'),
+        'USER': os.getenv('POSTGRES_USER', default='postgres'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', default='Industrial'),
+        'HOST': os.getenv('DB_HOST', default='localhost'),
+        'PORT': os.getenv('DB_PORT', default='5432')
     }
 }
 
@@ -159,4 +158,20 @@ SWAGGER_SETTINGS = {
             'in': 'header'
         }
     }
+}
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django.db.backends': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+    },
 }

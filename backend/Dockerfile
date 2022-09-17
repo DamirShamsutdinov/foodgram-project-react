@@ -1,0 +1,9 @@
+FROM python:3.7-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip3 install --upgrade pip
+RUN pip3 install -r requirements.txt --no-cache-dir
+COPY . .
+CMD ["gunicorn", "backend.wsgi:application", "--bind", "0:8000"]
+
+#LABEL author='d4mir.sh.d@yandex.ru' version=1
