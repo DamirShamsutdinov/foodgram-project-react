@@ -2,12 +2,10 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models import UniqueConstraint
 
-from pkg_resources import _
-
 
 class CustomUser(AbstractUser):
     """Модель Пользователя"""
-    email = models.EmailField(_("email address"), blank=True, unique=True)
+    email = models.EmailField("email address", blank=True, unique=True)
     USERNAME_FIELD = "email"
 
     REQUIRED_FIELDS = ("username", "first_name", "last_name")
