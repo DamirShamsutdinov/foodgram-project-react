@@ -23,9 +23,8 @@ class ListDetailUserSerializer(serializers.ModelSerializer):
     def get_is_subscribed(self, obj):
         """Проверка на наличие подписок"""
         user = self.context.get("request").user
-        if user.is_authenticated:
-            return Follow.objects.filter(user=user, author=obj.id).exists()
-        return False
+        return user.is_authenticated and Follow.objects.filter(user=user, author=obj.id).exists()
+
 
 
 class SupportRecipesSerializer(serializers.ModelSerializer):
@@ -58,9 +57,8 @@ class SubscribeSerializer(serializers.ModelSerializer):
     def get_is_subscribed(self, obj):
         """Проверка на наличие подписок"""
         user = self.context.get("request").user
-        if user.is_authenticated:
-            return Follow.objects.filter(user=user, author=obj.id).exists()
-        return False
+        return user.is_authenticated and Follow.objects.filter(user=user, author=obj.id).exists()
+
 
     def get_recipes(self, obj):
         """Рецепты автора"""

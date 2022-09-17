@@ -45,10 +45,10 @@ class Ingredients(models.Model):
     class Meta:
         verbose_name = "Ингредиент"
         verbose_name_plural = "Ингредиенты"
-        ordering = ["name"]
+        ordering = ("name")
         constraints = [
             UniqueConstraint(
-                fields=["name", "measurement_unit"],
+                fields=("name", "measurement_unit"),
                 name="unique_ingredients")
         ]
 
@@ -99,7 +99,7 @@ class Recipes(models.Model):
     class Meta:
         verbose_name = "Рецепт"
         verbose_name_plural = "Рецепты"
-        ordering = ["name"]
+        ordering = ("name")
 
     def __str__(self):
         return self.name
@@ -153,11 +153,6 @@ class TagsRecipes(models.Model):
         return f"Теги_ {self.tag} для рецепта_ {self.recipe}"
 
 
-# from django.db.models import Sum
-# class Shopping_cart(models.Model):
-#     field_name_sum = ModelName.objects.aggregate(Sum("field_name"))
-
-
 class Favorite(models.Model):
     """модель Избранные_рецепты"""
     user = models.ForeignKey(
@@ -179,7 +174,7 @@ class Favorite(models.Model):
         verbose_name = "Избранные_рецепты"
         constraints = [
             UniqueConstraint(
-                fields=["user", "recipe"],
+                fields=("user", "recipe"),
                 name="unique_favorite")
         ]
 
@@ -208,7 +203,7 @@ class ShoppingList(models.Model):
         verbose_name = "Список_Покупок"
         constraints = [
             UniqueConstraint(
-                fields=["user", "recipe"],
+                fields=("user", "recipe"),
                 name="unique_shoppinglist")
         ]
 
