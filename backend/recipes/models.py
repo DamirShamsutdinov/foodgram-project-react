@@ -2,7 +2,6 @@ from colorfield.fields import ColorField
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import UniqueConstraint
-
 from users.models import CustomUser
 
 
@@ -45,11 +44,11 @@ class Ingredients(models.Model):
     class Meta:
         verbose_name = "Ингредиент"
         verbose_name_plural = "Ингредиенты"
-        ordering = ["name"]
+        ordering = ("name",)
         constraints = [
             UniqueConstraint(
                 fields=("name", "measurement_unit"),
-                name="unique_ingredients")
+                name="unique_ingredients"),
         ]
 
     def __str__(self):
@@ -92,14 +91,14 @@ class Recipes(models.Model):
     )
     cooking_time = models.PositiveSmallIntegerField(
         verbose_name="Время_приготовления",
-        validators=[MinValueValidator(1, message="Минимальное значение 1!")]
+        validators=(MinValueValidator(1, message="Минимальное значение 1!"),)
     )
     published = models.DateTimeField("Дата публикации", auto_now_add=True)
 
     class Meta:
         verbose_name = "Рецепт"
         verbose_name_plural = "Рецепты"
-        ordering = ["name"]
+        ordering = ("name",)
 
     def __str__(self):
         return self.name
@@ -123,15 +122,15 @@ class AmountIngredients(models.Model):
     )
     amount = models.SmallIntegerField(
         verbose_name="Количество_ингредиентов",
-        validators=[MinValueValidator(1, message="Минимальное количество 1!")]
+        validators=(MinValueValidator(1, message="Минимальное количество 1!"),)
     )
 
     class Meta:
         verbose_name = "Лист_Ингредиентов"
         constraints = [
             UniqueConstraint(
-                fields=["ingredients", "recipe"],
-                name="unique_ingredients_amount")
+                fields=("ingredients", "recipe"),
+                name="unique_ingredients_amount"),
         ]
 
     def __str__(self):

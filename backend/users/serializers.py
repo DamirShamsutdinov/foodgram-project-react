@@ -1,6 +1,5 @@
-from rest_framework import serializers
-
 from recipes.models import Recipes
+from rest_framework import serializers
 
 from .models import CustomUser, Follow
 
@@ -23,8 +22,8 @@ class ListDetailUserSerializer(serializers.ModelSerializer):
     def get_is_subscribed(self, obj):
         """Проверка на наличие подписок"""
         user = self.context.get("request").user
-        return user.is_authenticated and Follow.objects.filter(user=user, author=obj.id).exists()
-
+        return user.is_authenticated and Follow.objects.filter(
+            user=user, author=obj.id).exists()
 
 
 class SupportRecipesSerializer(serializers.ModelSerializer):
@@ -57,8 +56,8 @@ class SubscribeSerializer(serializers.ModelSerializer):
     def get_is_subscribed(self, obj):
         """Проверка на наличие подписок"""
         user = self.context.get("request").user
-        return user.is_authenticated and Follow.objects.filter(user=user, author=obj.id).exists()
-
+        return user.is_authenticated and Follow.objects.filter(
+            user=user, author=obj.id).exists()
 
     def get_recipes(self, obj):
         """Рецепты автора"""

@@ -1,13 +1,12 @@
 import csv
 
 from django.core.management import BaseCommand
-
 from recipes.models import Ingredients
 
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        with open('../data/ingredients.csv', encoding='utf-8') as csv_file:
+        with open('./data/ingredients.csv', encoding='utf-8') as csv_file:
             reader = csv.reader(csv_file)
             next(reader)
             for row in reader:
