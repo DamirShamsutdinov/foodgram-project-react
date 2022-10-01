@@ -1,5 +1,6 @@
-from recipes.models import Recipes
 from rest_framework import serializers
+
+from recipes.models import Recipes
 
 from .models import CustomUser, Follow
 
