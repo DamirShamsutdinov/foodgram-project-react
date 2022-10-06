@@ -2,7 +2,6 @@ from colorfield.fields import ColorField
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import UniqueConstraint
-
 from users.models import CustomUser
 
 
@@ -70,8 +69,7 @@ class Recipes(models.Model):
         verbose_name="Название_блюда",
     )
     image = models.ImageField(
-        upload_to="images",
-        null=False,
+        upload_to="images/",
         verbose_name="Картинка_блюда",
     )
     text = models.TextField(

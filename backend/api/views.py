@@ -1,7 +1,15 @@
+from api.filters import RecipeFilter
+from api.paginations import CustomPagination
+from api.permissions import IsUserSuperuserOrReadOnly
+from api.serializers import (CreateRecipesSerializer, GetRecipesSerializer,
+                             IngredientsSerializer, SupportRecipesSerializer,
+                             TagsSerializer)
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from recipes.models import (AmountIngredients, Favorite, Ingredients, Recipes,
+                            ShoppingList, Tags)
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.generics import ListAPIView
@@ -9,16 +17,9 @@ from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
-from api.filters import RecipeFilter
-from api.permissions import IsUserSuperuserOrReadOnly
-from api.serializers import (CreateRecipesSerializer, GetRecipesSerializer,
-                             IngredientsSerializer, SupportRecipesSerializer,
-                             TagsSerializer)
-from recipes.models import (AmountIngredients, Favorite, Ingredients, Recipes,
-                            ShoppingList, Tags)
+from rest_framework.parsers import MultiPartParser, FormParser
 from users.models import CustomUser, Follow
-from users.serializers import SubscribeSerializer
+from users.serializers import SubscribeSerializer, SubscribeListSerializer
 
 
 class TagsViewSet(ListModelMixin, RetrieveModelMixin, viewsets.GenericViewSet):
@@ -52,7 +53,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
         return CreateRecipesSerializer
 
     def perform_create(self, serializer):
-        return serializer.save(author=self.request.user)
+        return serializer.save(author=self.request.user, img=self.request.data.get('img'))
 
     def perform_update(self, serializer):
         return serializer.save(author=self.request.user)
@@ -122,53 +123,34 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
 
 class SubscribeListView(ListAPIView):
-    serializer_class = SubscribeSerializer
+    """Вью подписок"""
+    pagination_class = CustomPagination
     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        return CustomUser.objects.filter(following__user=self.request.user)
+    def get(self, request):
+        user = request.user
+        queryset = CustomUser.objects.filter(following__user=user)
+        page = self.paginate_queryset(queryset)
+        serializer = SubscribeListSerializer(
+            page, many=True, context={'request': request})
+        return self.get_paginated_response(serializer.data)
 
 
 class MainSubscribeViewSet(APIView):
-    serializer_class = SubscribeSerializer
+    """Подписка/отписка"""
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
-        user_id = self.kwargs["user_id"]
-        if user_id == request.user.id:
-            return Response(
-                {"error": "Нельзя подписаться на себя"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        author = get_object_or_404(CustomUser, id=user_id)
-        if Follow.objects.filter(
-                user=request.user,
-                author_id=user_id
-        ).exists():
-            return Response(
-                {"error": "Вы уже подписаны на пользователя"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        Follow.objects.create(
-            user=request.user,
-            author_id=user_id
-        )
-        return Response(
-            self.serializer_class(author, context={"request": request}).data,
-            status=status.HTTP_201_CREATED
-        )
+    def post(self, request, id):
+        data = {'author': id, 'user': request.user.id}
+        serializer = SubscribeSerializer(
+            data=data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    def delete(self, request, *args, **kwargs):
-        user_id = self.kwargs.get("user_id")
-        get_object_or_404(CustomUser, id=user_id)
-        subscription = Follow.objects.filter(
-            user=request.user,
-            author_id=user_id
-        )
-        if subscription:
-            subscription.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response(
-            {"error": "Подписки на автора - нет"},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+    def delete(self, request, id):
+        user = request.user
+        author = get_object_or_404(CustomUser, id=id)
+        follow = get_object_or_404(Follow, user=user, author=author, )
+        follow.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

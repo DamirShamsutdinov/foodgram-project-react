@@ -7,13 +7,13 @@ class CustomUser(AbstractUser):
     """Модель Пользователя"""
     email = models.EmailField("email address", blank=True, unique=True)
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ("username", "first_name", "last_name", "password")
+    REQUIRED_FIELDS = ("username", "first_name", "last_name")
 
     class Meta:
         ordering = ("id",)
 
     def __str__(self):
-        return self.email
+        return self.username
 
 
 class Follow(models.Model):

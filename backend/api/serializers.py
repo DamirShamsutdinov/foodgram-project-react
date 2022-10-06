@@ -1,11 +1,9 @@
 from django.shortcuts import get_object_or_404
-from django.utils import timezone
 from drf_extra_fields.fields import Base64ImageField
+from recipes.models import (AmountIngredients, Favorite, Ingredients, Recipes,
+                            ShoppingList, Tags)
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-
-from recipes.models import (AmountIngredients, Favorite, Ingredients, Recipes,
-                            ShoppingList, Tags, TagsRecipes)
 from users.serializers import ListDetailUserSerializer
 
 
@@ -39,8 +37,7 @@ class AllIngredientsSerializer(serializers.ModelSerializer):
 
 class AmountRecipeSerializer(serializers.ModelSerializer):
     """Сериализатор модели Ингредиенты_Рецепта"""
-    id = serializers.IntegerField()
-    amount = serializers.IntegerField()
+    id = serializers.PrimaryKeyRelatedField(queryset=Ingredients.objects.all())
 
     class Meta:
         model = AmountIngredients
@@ -63,7 +60,6 @@ class GetRecipesSerializer(serializers.ModelSerializer):
     image = Base64ImageField()
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
-    published = serializers.HiddenField(default=timezone.now)
 
     class Meta:
         model = Recipes
@@ -90,7 +86,7 @@ class GetRecipesSerializer(serializers.ModelSerializer):
         if request.user.is_anonymous:
             return False
         queryset = model.objects.filter(
-            user=request.user, recipe=obj.id).exists()
+            user=request.user.id, recipe=obj.id).exists()
         return queryset
 
     def get_is_favorited(self, obj):
@@ -102,12 +98,12 @@ class GetRecipesSerializer(serializers.ModelSerializer):
 
 class CreateRecipesSerializer(serializers.ModelSerializer):
     """Создание/обновление/удаление Сериализатор Рецептов"""
-    author = ListDetailUserSerializer()
     ingredients = AmountRecipeSerializer(many=True)
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tags.objects.all(),
         many=True
     )
+    image = Base64ImageField()
 
     class Meta:
         model = Recipes
@@ -151,18 +147,7 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
                 raise ValidationError({
                     "ingredients": "Необходимо добавить ингредиенты!"
                 })
-            ingredients_set.append(ingredient["id"])
-        tags = data["tags"]
-        if not tags:
-            raise ValidationError({
-                "tags": "Необходимо добавить тег!"
-            })
-        tags_list = []
-        for tag in tags:
-            if tag in tags_list:
-                raise ValidationError({
-                    "tags": "Теги для рецепта уникальны!"
-                })
+            ingredients_set.add(ingredient["id"])
         return data
 
     def update(self, instance, validated_data):
