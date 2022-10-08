@@ -174,31 +174,6 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 
-class FavoriteSerializer(serializers.ModelSerializer):
-    """Сериализатор модели Избранные_рецепты"""
-
-    class Meta:
-        fields = "__all__"
-        model = Favorite
-
-    def validate(self, data):
-        request = self.context.get('request')
-        if not request or request.user.is_anonymous:
-            return False
-        recipe = data['recipe']
-        if Favorite.objects.filter(user=request.user, recipe=recipe).exists():
-            raise serializers.ValidationError({
-                'status': 'Рецепт уже в избранном!'
-            })
-        return data
-
-    def to_representation(self, instance):
-        request = self.context.get('request')
-        context = {'request': request}
-        return SupportRecipesSerializer(
-            instance.recipe, context=context).data
-
-
 class ShoppingListSerializer(serializers.ModelSerializer):
     """Сериализатор модели Список_покупок"""
 
