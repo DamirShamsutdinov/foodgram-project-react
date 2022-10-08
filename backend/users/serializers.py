@@ -7,7 +7,7 @@ from .models import CustomUser, Follow
 
 
 class CurrentUserSerializer(UserSerializer):
-    is_subscribed = serializers.SerializerMethodField("is_subscribed")
+    is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
         model = CustomUser

@@ -73,36 +73,45 @@ class RecipesViewSet(viewsets.ModelViewSet):
             headers=headers
         )
 
-    def __base(self, request, pk=None):
-        user = request.user
+    def __base(self, request, cur_model, pk=None):
         recipe = get_object_or_404(Recipes, pk=pk)
-        relation = self.objects.filter(user=user, recipe=recipe)
-        if request.method == "POST":
-            if relation.exists():
+        user = self.request.user
+        if user.is_anonymous:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+        checked_queryset = cur_model.objects.filter(
+            user=user, recipe=recipe)
+        if request.method == 'POST':
+            if not checked_queryset:
+                created = cur_model.objects.create(user=user, recipe=recipe)
+                serializer = SupportRecipesSerializer(created.recipe)
                 return Response(
-                    "Уже есть в списке!",
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            self.objects.create(user=user, recipe=recipe)
-            serializer = SupportRecipesSerializer(recipe)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        if request.method == "DELETE":
-            if not relation.exists():
-                return Response(
-                    "Нет в списке!",
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            relation.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+                    status=status.HTTP_201_CREATED, data=serializer.data)
+            else:
+                if cur_model == Favorite:
+                    data = {'errors': 'Этот рецепт уже в избранном'}
+                elif cur_model == ShoppingList:
+                    data = {'errors': 'Этот рецепт уже в покупках'}
+                return Response(status=status.HTTP_400_BAD_REQUEST, data=data)
+        elif request.method == 'DELETE':
+            if not checked_queryset:
+                if cur_model == Favorite:
+                    data = {
+                        'errors': 'Этого рецепта нет в избранном'}
+                elif cur_model == ShoppingList:
+                    data = {
+                        'errors': 'Этого рецепта нет в списке покупок'}
+                return Response(status=status.HTTP_400_BAD_REQUEST, data=data)
+            else:
+                checked_queryset.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=["post", "delete"], url_path="favorite")
     def favorite(self):
-        return self.__base(Favorite)
+        return self.__base(request, cur_model=Favorite, pk=pk)
 
     @action(detail=True, methods=["post", "delete"], url_path="shopping_cart")
     def shopping_cart(self):
-        return self.__base(ShoppingList)
+        return self.__base(request, cur_model=ShoppingList, pk=pk)
 
     @action(detail=False, methods=["get"], url_path="download_shopping_cart")
     def download_shopping_cart(self, request):
