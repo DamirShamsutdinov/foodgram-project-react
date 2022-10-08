@@ -172,17 +172,3 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
             instance.tags.add(get_object_or_404(Tags, id=tag.id))
         self.add_ingredients(instance, ingredients_d)
         return super().update(instance, validated_data)
-
-
-class ShoppingListSerializer(serializers.ModelSerializer):
-    """Сериализатор модели Список_покупок"""
-
-    class Meta:
-        fields = "__all__"
-        model = ShoppingList
-
-    def to_representation(self, instance):
-        request = self.context.get('request')
-        context = {'request': request}
-        return SupportRecipesSerializer(
-            instance.recipe, context=context).data
