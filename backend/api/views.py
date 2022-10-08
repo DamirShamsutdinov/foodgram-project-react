@@ -53,7 +53,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
         return CreateRecipesSerializer
 
     def perform_create(self, serializer):
-        return serializer.save(author=self.request.user, img=self.request.data.get('img'))
+        return serializer.save(author=self.request.user)
 
     def perform_update(self, serializer):
         return serializer.save(author=self.request.user)
@@ -151,6 +151,6 @@ class MainSubscribeViewSet(APIView):
     def delete(self, request, id):
         user = request.user
         author = get_object_or_404(CustomUser, id=id)
-        follow = get_object_or_404(Follow, user=user, author=author, )
+        follow = get_object_or_404(Follow, user=user, author=author)
         follow.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
