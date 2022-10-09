@@ -24,7 +24,7 @@ class CurrentUserSerializer(UserSerializer):
         request = self.context.get("request")
         if obj == request.user or request.user.is_anonymous:
             return False
-        return Follow.objects.filter(user=request.user, author=obj).exists()
+        return Follow.objects.filter(user=request.user, author=obj.id).exists()
 
 
 class SupportRecipesSerializer(serializers.ModelSerializer):
@@ -66,16 +66,11 @@ class SubscribeListSerializer(serializers.ModelSerializer):
                 user=request.user, author=obj).exists()
 
     def get_recipes(self, obj):
-        print(f"n/Функция get_recipes объект - {obj}")
-        request = self.context.get('request')
-        print(f"n/Функция get_recipes реквест - {request}")
-
-        recipes = Recipes.objects.filter(author=obj)
-        serializer = SupportRecipesSerializer(recipes, many=True)
-        return serializer.data
+        recipes = obj.recipes.all()
+        return SupportRecipesSerializer(recipes, many=True).data
 
     def get_recipes_count(self, obj):
-        recipes = Recipes.objects.filter(author=obj)
+        recipes = Recipes.objects.filter(author=obj.id)
         return recipes.count()
 
 

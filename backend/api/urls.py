@@ -15,7 +15,7 @@ urlpatterns = [
         name="subscriptions"
     ),
     path(
-        "users/<int:id>/subscribe/",
+        "users/<int:user_id>/subscribe/",
         MainSubscribeViewSet.as_view(),
         name="subscribe"
     ),
