@@ -75,59 +75,39 @@ class RecipesViewSet(viewsets.ModelViewSet):
             headers=headers
         )
 
-    @action(detail=True, methods=["post", "delete"], url_path="favorite")
-    def favorite(self, request, pk=None):
-        """Удаление и добавление рецептов в Избранное"""
+    def __base(self, request, ch_model, pk=None):
         user = request.user
+        recipe = get_object_or_404(Recipes, pk=pk)
         if request.method == "POST":
-            recipe = get_object_or_404(Recipes, pk=pk)
-            relation = Favorite.objects.filter(user=user, recipe=recipe)
+            relation = ch_model.objects.filter(user=user, recipe=recipe)
             if relation.exists():
                 return Response(
-                    "Уже есть в списке Избранных!",
+                    "Объект уже есть в списке!",
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            Favorite.objects.create(user=user, recipe=recipe)
+            ch_model.objects.create(user=user, recipe=recipe)
             serializer = SupportRecipesSerializer(recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == "DELETE":
-            recipe = get_object_or_404(Recipes, pk=pk)
-            relation = Favorite.objects.filter(user=user, recipe=recipe)
+            relation = ch_model.objects.filter(user=user, recipe=recipe)
             if not relation.exists():
                 return Response(
-                    "Нет в избранном!",
+                    "Объекта нет в списке!",
                     status=status.HTTP_400_BAD_REQUEST
                 )
             relation.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+    @action(detail=True, methods=["post", "delete"], url_path="favorite")
+    def favorite(self, request, pk=None):
+        """Удаление и добавление рецептов в Избранное"""
+        return self.__base(request, ch_model=Favorite, pk=pk)
+
     @action(detail=True, methods=["post", "delete"], url_path="shopping_cart")
     def shopping_cart(self, request, pk=None):
         """Удаление и добавление рецептов в Покупки"""
-        user = request.user
-        if request.method == "POST":
-            recipe = get_object_or_404(Recipes, pk=pk)
-            relation = ShoppingList.objects.filter(user=user, recipe=recipe)
-            if relation.exists():
-                return Response(
-                    "Уже есть в списке Покупок!",
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            ShoppingList.objects.create(user=user, recipe=recipe)
-            serializer = SupportRecipesSerializer(recipe)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        if request.method == "DELETE":
-            recipe = get_object_or_404(Recipes, pk=pk)
-            relation = ShoppingList.objects.filter(user=user, recipe=recipe)
-            if not relation.exists():
-                return Response(
-                    "Нет в списке покупок!",
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            relation.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        return self.__base(request, ch_model=ShoppingList, pk=pk)
 
     @action(detail=False, methods=["get"], url_path="download_shopping_cart")
     def download_shopping_cart(self, request):
