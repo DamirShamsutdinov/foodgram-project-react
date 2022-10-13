@@ -1,7 +1,8 @@
-from recipes.models import Recipes
+from djoser.serializers import UserSerializer
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
-from djoser.serializers import UserSerializer
+
+from recipes.models import Recipes
 
 from .models import CustomUser, Follow
 

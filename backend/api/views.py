@@ -1,25 +1,26 @@
-from api.filters import RecipeFilter
+from django.db.models import Sum
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.generics import ListAPIView
+from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
+from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from api.filters import RecipeFilter, IngredientFilter
 from api.paginations import CustomPagination
 from api.permissions import IsUserSuperuserOrReadOnly
 from api.serializers import (CreateRecipesSerializer, GetRecipesSerializer,
                              IngredientsSerializer, SupportRecipesSerializer,
                              TagsSerializer)
-from django.db.models import Sum
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
-from django_filters.rest_framework import DjangoFilterBackend
 from recipes.models import (AmountIngredients, Favorite, Ingredients, Recipes,
                             ShoppingList, Tags)
-from rest_framework import status, viewsets
-from rest_framework.decorators import action
-from rest_framework.generics import ListAPIView
-from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework.parsers import MultiPartParser, FormParser
 from users.models import CustomUser, Follow
-from users.serializers import SubscribeSerializer, SubscribeListSerializer
+from users.serializers import SubscribeListSerializer, SubscribeSerializer
 
 
 class TagsViewSet(ListModelMixin, RetrieveModelMixin, viewsets.GenericViewSet):
@@ -37,6 +38,7 @@ class IngredientsViewSet(ListModelMixin, RetrieveModelMixin,
     serializer_class = IngredientsSerializer
     permission_classes = (IsUserSuperuserOrReadOnly,)
     pagination_class = None
+    filterset_class = IngredientFilter
 
 
 class RecipesViewSet(viewsets.ModelViewSet):
@@ -155,12 +157,12 @@ class SubscribeListView(ListAPIView):
         queryset = CustomUser.objects.filter(following__user=user)
         page = self.paginate_queryset(queryset)
         serializer = SubscribeListSerializer(
-            page, many=True, context={'request': request})
+            page, many=True, context={"request": request})
         return self.get_paginated_response(serializer.data)
 
 
 class SubscribeListView(ListAPIView):
-    serializer_class = SubscribeSerializer
+    serializer_class = SubscribeListSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -168,17 +170,17 @@ class SubscribeListView(ListAPIView):
 
 
 class MainSubscribeViewSet(APIView):
+    queryset = CustomUser.objects.all()
     serializer_class = SubscribeSerializer
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        user_id = self.kwargs["user_id"]
+        user_id = self.kwargs.get("user_id")
         if user_id == request.user.id:
             return Response(
                 {"error": "Нельзя подписаться на себя"},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        author = get_object_or_404(CustomUser, id=user_id)
         if Follow.objects.filter(
                 user=request.user,
                 author_id=user_id
@@ -187,6 +189,7 @@ class MainSubscribeViewSet(APIView):
                 {"error": "Вы уже подписаны на пользователя"},
                 status=status.HTTP_400_BAD_REQUEST
             )
+        author = get_object_or_404(CustomUser, id=user_id)
         Follow.objects.create(
             user=request.user,
             author_id=user_id
@@ -207,6 +210,6 @@ class MainSubscribeViewSet(APIView):
             subscription.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(
-            {"error": "Подписки на автора - нет"},
+            {"error": "Вы не подписаны на пользователя"},
             status=status.HTTP_400_BAD_REQUEST
         )

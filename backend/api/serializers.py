@@ -1,13 +1,13 @@
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from drf_extra_fields.fields import Base64ImageField
-from recipes.models import (AmountIngredients, Favorite, Ingredients, Recipes,
-                            ShoppingList, Tags)
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from users.serializers import CurrentUserSerializer
 
-from backend.recipes.models import TagsRecipes
+
+from recipes.models import (AmountIngredients, Favorite, Ingredients, Recipes,
+                            ShoppingList, Tags, TagsRecipes)
+from users.serializers import CurrentUserSerializer
 
 
 class TagsSerializer(serializers.ModelSerializer):
@@ -104,7 +104,7 @@ class GetRecipesSerializer(serializers.ModelSerializer):
 
 class CreateRecipesSerializer(serializers.ModelSerializer):
     """Создание/обновление/удаление Сериализатор Рецептов"""
-    author = CurrentUserSerializer()
+    # author = CurrentUserSerializer()
     ingredients = AmountRecipeSerializer(many=True)
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tags.objects.all(),
@@ -123,6 +123,7 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
             "name",
             "text",
             "cooking_time",
+            "published"
         )
         read_only_fields = ("author",)
 
@@ -146,7 +147,7 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
                 raise ValidationError({
                     "tags": "Необходимо добавить тег!"
                 })
-            if tag["id"] in tags_set:
+            if tag in tags_set:
                 raise ValidationError({
                     "tags": "Теги для рецепта уникальны!"
                 })
