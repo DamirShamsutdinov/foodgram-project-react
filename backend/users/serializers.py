@@ -65,6 +65,7 @@ class SubscribeListSerializer(serializers.ModelSerializer):
         if self.__check_user_authorized(obj) is True:
             return Follow.objects.filter(
                 user=request.user, author=obj).exists()
+        return False
 
     def get_recipes(self, obj):
         recipes = obj.recipes.all()
