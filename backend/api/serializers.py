@@ -1,9 +1,7 @@
-from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-
 
 from recipes.models import (AmountIngredients, Favorite, Ingredients, Recipes,
                             ShoppingList, Tags, TagsRecipes)
@@ -80,7 +78,8 @@ class GetRecipesSerializer(serializers.ModelSerializer):
             "published"
         )
         ordering = ("-published",)
-        read_only_fields = ("author", "ingredients", "is_favorited", "is_in_shopping_cart",)
+        read_only_fields = (
+            "author", "ingredients", "is_favorited", "is_in_shopping_cart",)
 
     @staticmethod
     def get_ingredients(obj):

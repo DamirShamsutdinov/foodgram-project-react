@@ -6,7 +6,6 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.generics import ListAPIView
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
-from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -128,7 +127,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
 
 class SubscribeListView(ListAPIView):
-    """Вью подписок"""
+    """Вьюсет лист_подписок"""
     pagination_class = CustomPagination
     permission_classes = [IsAuthenticated]
 
@@ -141,15 +140,8 @@ class SubscribeListView(ListAPIView):
         return self.get_paginated_response(serializer.data)
 
 
-class SubscribeListView(ListAPIView):
-    serializer_class = SubscribeListSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        return CustomUser.objects.filter(following__user=self.request.user)
-
-
 class MainSubscribeViewSet(APIView):
+    """Вьюсет подписаться/отписаться"""
     queryset = CustomUser.objects.all()
     serializer_class = SubscribeSerializer
     permission_classes = [IsAuthenticated]

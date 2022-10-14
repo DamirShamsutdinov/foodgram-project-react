@@ -10,6 +10,7 @@ class IngredientFilter(filters.FilterSet):
         model = Ingredients
         fields = ('name',)
 
+
 class RecipeFilter(filters.FilterSet):
     tags = filters.ModelMultipleChoiceFilter(
         queryset=Tags.objects.all(),
