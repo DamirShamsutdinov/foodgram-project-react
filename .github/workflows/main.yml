@@ -20,8 +20,9 @@ jobs:
 
       - name: Test with flake8 and django tests
         run: |
+          cat setup.cfg
           python -m flake8
-
+          python ./backend/manage.py check
   build_and_push_to_docker_hub:
     name: Push Docker image to Docker Hub
     if: github.ref == 'refs/heads/master'
