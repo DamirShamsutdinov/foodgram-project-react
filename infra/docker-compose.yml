@@ -20,7 +20,6 @@ services:
 
   frontend:
     image: alvaresyp/foodgram_frontend:latest
-
     volumes:
       - ../frontend/:/app/result_build/
     depends_on:
@@ -39,7 +38,6 @@ services:
     depends_on:
       - backend
       - frontend
-    restart: always
 
 volumes:
   postgres_data:
