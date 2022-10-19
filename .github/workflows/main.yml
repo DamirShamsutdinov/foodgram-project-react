@@ -17,15 +17,15 @@ jobs:
           python -m pip install --upgrade pip 
           pip install flake8 pep8-naming flake8-broken-line flake8-return flake8-isort
           pip install -r backend/requirements.txt
-      - name: Test with flake8 and django tests
+      - name: Test with flake8
         run: |
           python -m flake8
 
   build_and_push_to_docker_hub:
     name: Push Docker image to Docker Hub
-    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     needs: tests
+    if: github.ref == 'refs/heads/master'
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2
@@ -46,7 +46,6 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: frontend/
-          file: ./frontend/Dockerfile
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/foodgram_frontend:latest
 
@@ -67,7 +66,7 @@ jobs:
             sudo docker-compose stop 
             sudo docker-compose rm backend
             sudo docker compose up -d 
-
+ls
   send_message:
     runs-on: ubuntu-latest
     needs: deploy
@@ -78,3 +77,5 @@ jobs:
           to: ${{ secrets.TELEGRAM_TO }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
           message: ${{ github.workflow }} успешно выполнен!
+
+
