@@ -10,13 +10,15 @@ services:
     image: alvaresyp/foodgram_frontend:latest
     volumes:
       - ../frontend/:/app/result_build/
+    depends_on:
+      - backend
 
   db:
     image: postgres:13.0-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     env_file:
-      - ./.env
+      - .env_example
 
   backend:
     image: alvaresyp/foodgram_backend:latest
@@ -27,7 +29,7 @@ services:
     depends_on:
       - db
     env_file:
-      - ./.env
+      - .env_example
 
   nginx:
     image: nginx:1.19.3
@@ -41,7 +43,5 @@ services:
       - media_value:/var/html/media/
     depends_on:
       - frontend
-
-
-
+      - backend
 
