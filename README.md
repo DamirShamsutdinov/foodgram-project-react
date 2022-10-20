@@ -18,7 +18,7 @@
 ![python version](https://img.shields.io/badge/djangorestframework-3.13.1-yellowgreen)
 ![python version](https://img.shields.io/badge/djoser-2.1.0-yellowgreen)
 ![python version](https://img.shields.io/badge/gunicorn-20.1.0-yellowgreen)
-![python version](https://img.shields.io/badge/psycopg2-binary-2.9.2-yellowgreen)
+![python version](https://img.shields.io/badge/psycopg2--binary-2.9.2-yellowgreen)
 
 ## Запуск проекта
 
