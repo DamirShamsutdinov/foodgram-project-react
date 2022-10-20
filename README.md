@@ -2,8 +2,12 @@
 ![Foodgram workflow](https://github.com/DamirShamsutdinov/foodgram-project-react/actions/workflows/main.yml/badge.svg)
 
 ###Cайт временно доступен по ссылке   
-[http://51.250.102.129/]
-
+http://158.160.6.225/
+```
+Суперюзер
+Логин: admin@bk.ru
+Пароль: Industrial
+```
 
 ## О проекте
 На этом сервисе пользователи смогут:
