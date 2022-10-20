@@ -10,8 +10,6 @@ services:
     image: alvaresyp/foodgram_frontend:latest
     volumes:
       - ../frontend/:/app/result_build/
-    depends_on:
-      - backend
 
   db:
     image: postgres:13.0-alpine
@@ -42,7 +40,6 @@ services:
       - static_value:/var/html/static/
       - media_value:/var/html/media/
     depends_on:
-      - backend
       - frontend
 
 
