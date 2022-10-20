@@ -1,7 +1,7 @@
-## Foodgram (продуктовый помощник)
+## Foodgram – продуктовый помошник
 ![Foodgram workflow](https://github.com/DamirShamsutdinov/foodgram-project-react/actions/workflows/main.yml/badge.svg)
 
-###Cайт временно доступен по ссылке   
+### Cайт временно доступен по ссылке   
 http://158.160.6.225/
 ```
 Суперюзер
