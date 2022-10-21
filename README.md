@@ -1,13 +1,13 @@
 ## Foodgram – продуктовый помошник
 ![Foodgram workflow](https://github.com/DamirShamsutdinov/foodgram-project-react/actions/workflows/main.yml/badge.svg)
 
-### Cайт временно доступен по ссылке   
-http://158.160.6.225/
+Cайт временно доступен по ссылке: http://158.160.6.225/
 ```
 Суперюзер
 Логин: admin@bk.ru
 Пароль: Industrial
 ```
+Документация к API по ссылке: http://158.160.6.225/api/docs/
 
 ## О проекте
 На этом сервисе пользователи смогут:
