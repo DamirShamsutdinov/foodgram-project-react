@@ -24,6 +24,11 @@ services:
     env_file:
       - ./.env
 
+  docs:
+    image: alvaresyp/foodgram_docs:latest
+    volumes:
+      - ../docs/:/docs_copy/docs/
+
   nginx:
     image: nginx:1.19.3
     ports:
