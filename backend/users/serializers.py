@@ -38,7 +38,7 @@ class SupportRecipesSerializer(serializers.ModelSerializer):
 
 class SubscribeListSerializer(serializers.ModelSerializer):
     """Сериализатор Избранного"""
-    is_subscribed = serializers.SerializerMethodField()
+    # is_subscribed = serializers.SerializerMethodField()
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
 
@@ -60,12 +60,12 @@ class SubscribeListSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         return request and request.user.is_authenticated
 
-    def get_is_subscribed(self, obj):
-        request = self.context.get('request')
-        if self.__check_user_authorized(obj) is True:
-            return Follow.objects.filter(
-                user=request.user, author=obj).exists()
-        return False
+    # def get_is_subscribed(self, obj):
+    #     request = self.context.get('request')
+    #     if self.__check_user_authorized(obj) is True:
+    #         return Follow.objects.filter(
+    #             user=request.user, author=obj).exists()
+    #     return False
 
     def get_recipes(self, obj):
         recipes = obj.recipes.all()
