@@ -1,6 +1,5 @@
 from djoser.serializers import UserSerializer
 from rest_framework import serializers
-from rest_framework.validators import UniqueTogetherValidator
 
 from recipes.models import Recipes
 
@@ -74,5 +73,3 @@ class SubscribeListSerializer(serializers.ModelSerializer):
     def get_recipes_count(self, obj):
         recipes = Recipes.objects.filter(author=obj.id)
         return recipes.count()
-
-
