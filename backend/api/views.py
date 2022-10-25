@@ -148,7 +148,7 @@ class MainSubscribeViewSet(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, id):
-        data = {'user': request.user.id, 'author': id}
+        data = {'user': request.user, 'author': id}
         serializer = SubscribeSerializer(
             data=data, context={'request': request})
         serializer.is_valid(raise_exception=True)
@@ -156,7 +156,7 @@ class MainSubscribeViewSet(APIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def delete(self, request, id):
-        user = request.user.id
+        user = request.user
         author = get_object_or_404(CustomUser, id=id)
         follow = get_object_or_404(Follow, user=user, author=author)
         follow.delete()
