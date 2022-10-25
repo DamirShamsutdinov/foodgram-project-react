@@ -127,37 +127,68 @@ class RecipesViewSet(viewsets.ModelViewSet):
         return response
 
 
+class MainSubscribeViewSet(APIView):
+    """Подписаться/отписаться на автора рецепта"""
+    serializer_class = SubscribeSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = CustomPagination
+
+    def post(self, request, *args, **kwargs):
+        user_id = self.kwargs.get('user_id')
+        if user_id == request.user.id:
+            return Response(
+                {'error': 'Нельзя подписаться на себя'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        if Follow.objects.filter(
+                user=request.user,
+                author_id=user_id
+        ).exists():
+            return Response(
+                {'error': 'Вы уже подписаны на пользователя'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        author = get_object_or_404(CustomUser, id=user_id)
+        Follow.objects.create(
+            user=request.user,
+            author_id=user_id
+        )
+        return Response(
+            self.serializer_class(author, context={'request': request}).data,
+            status=status.HTTP_201_CREATED
+        )
+
+    def delete(self, request, *args, **kwargs):
+        user_id = self.kwargs.get('user_id')
+        get_object_or_404(CustomUser, id=user_id)
+        subscription = Follow.objects.filter(
+            user=request.user,
+            author_id=user_id
+        )
+        if subscription:
+            subscription.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(
+            {'error': 'Вы не подписаны на пользователя'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+# class SubscribeListView(ListAPIView):
+#     serializer_class = SubscribeSerializer
+#     permission_classes = [IsAuthenticated]
+#     pagination_class = CustomPagination
+#
+#     def get_queryset(self):
+#         return CustomUser.objects.filter(following__user=self.request.user)
+
 class SubscribeListView(ListAPIView):
     """Лист_подписок"""
     pagination_class = CustomPagination
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        user = request.user
-        queryset = CustomUser.objects.filter(following__user=user)
+        queryset = CustomUser.objects.filter(following__user=request.user)
         page = self.paginate_queryset(queryset)
         serializer = SubscribeListSerializer(
             page, many=True, context={"request": request})
         return self.get_paginated_response(serializer.data)
-
-
-class MainSubscribeViewSet(APIView):
-    """Подписаться/отписаться на автора рецепта"""
-    # queryset = CustomUser.objects.all()
-    serializer_class = SubscribeSerializer
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request, id):
-        data = {'user': request.user, 'author': id}
-        serializer = SubscribeSerializer(
-            data=data, context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    def delete(self, request, id):
-        user = request.user
-        author = get_object_or_404(CustomUser, id=id)
-        follow = get_object_or_404(Follow, user=user, author=author)
-        follow.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
