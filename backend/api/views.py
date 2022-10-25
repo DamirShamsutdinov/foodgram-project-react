@@ -176,6 +176,3 @@ class MainSubscribeViewSet(APIView):
     #         {"error": "Вы не подписаны на пользователя"},
     #         status=status.HTTP_400_BAD_REQUEST
     #     )
-
-
-
