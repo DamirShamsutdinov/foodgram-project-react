@@ -144,35 +144,20 @@ class SubscribeListView(ListAPIView):
 class MainSubscribeViewSet(APIView):
     """Подписаться/отписаться на автора рецепта"""
     # queryset = CustomUser.objects.all()
-    # serializer_class = SubscribeSerializer
+    serializer_class = SubscribeSerializer
     permission_classes = [IsAuthenticated]
 
     def post(self, request, id):
-        data = {'author': id, 'user': request.user.id}
+        data = {'user': request.user.id, 'author': id}
         serializer = SubscribeSerializer(
             data=data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    # def delete(self, request, id):
-    #     user = request.user
-    #     author = get_object_or_404(CustomUser, id=id)
-    #     follow = get_object_or_404(Follow, user=user, author=author)
-    #     follow.delete()
-    #     return Response(status=status.HTTP_204_NO_CONTENT)
-
-    def delete(self, request, *args, **kwargs):
-        user_id = self.kwargs.get("user_id")
-        get_object_or_404(CustomUser, id=user_id)
-        subscription = Follow.objects.filter(
-            user=request.user,
-            author_id=user_id
-        )
-        if subscription:
-            subscription.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response(
-            {"error": "Вы не подписаны на пользователя"},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+    def delete(self, request, id):
+        user = request.user.id
+        author = get_object_or_404(CustomUser, id=id)
+        follow = get_object_or_404(Follow, user=user, author=author)
+        follow.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
