@@ -19,7 +19,7 @@ from api.serializers import (CreateRecipesSerializer, GetRecipesSerializer,
 from recipes.models import (AmountIngredients, Favorite, Ingredients, Recipes,
                             ShoppingList, Tags)
 from users.models import CustomUser, Follow
-from users.serializers import SubscribeListSerializer, SubscribeSerializer
+from users.serializers import SubscribeSerializer
 
 
 class TagsViewSet(ListModelMixin, RetrieveModelMixin, viewsets.GenericViewSet):
