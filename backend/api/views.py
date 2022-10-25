@@ -127,6 +127,15 @@ class RecipesViewSet(viewsets.ModelViewSet):
         return response
 
 
+class SubscribeListView(ListAPIView):
+    """Список покупок"""
+    serializer_class = SubscribeSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def get_queryset(self):
+        return Follow.objects.filter(user=self.request.user)
+
+
 class MainSubscribeViewSet(APIView):
     """Подписаться/отписаться на автора рецепта"""
     permission_classes = [IsAuthenticated]
@@ -165,12 +174,3 @@ class MainSubscribeViewSet(APIView):
             {'error': 'Вы не подписаны на пользователя'},
             status=status.HTTP_400_BAD_REQUEST
         )
-
-
-class SubscribeListView(ListAPIView):
-    serializer_class = SubscribeSerializer
-    permission_classes = [IsAuthenticated]
-    pagination_class = CustomPagination
-
-    def get_queryset(self):
-        return CustomUser.objects.filter(following__user=self.request.user)

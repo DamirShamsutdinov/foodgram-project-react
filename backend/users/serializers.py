@@ -73,3 +73,38 @@ class SubscribeListSerializer(serializers.ModelSerializer):
     def get_recipes_count(self, obj):
         recipes = Recipes.objects.filter(author=obj.id)
         return recipes.count()
+
+
+class SubscribeSerializer(serializers.ModelSerializer):
+    id = serializers.ReadOnlyField(source='author.id')
+    username = serializers.ReadOnlyField(source='author.username')
+    email = serializers.ReadOnlyField(source='author.email')
+    first_name = serializers.ReadOnlyField(source='author.first_name')
+    last_name = serializers.ReadOnlyField(source='author.last_name')
+    is_subscribed = serializers.SerializerMethodField()
+    recipes = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Follow
+        fields = ('email', 'id', 'username', 'first_name', 'last_name',
+                  'is_subscribed', 'recipes', 'recipes_count')
+
+    def get_recipes(self, obj):
+        recipes = Recipes.objects.filter(author=obj.author)
+        recipes_limit = self.context['request'].query_params.get(
+            'recipes_limit'
+        )
+        if recipes_limit:
+            return SupportRecipesSerializer(
+                recipes[:int(recipes_limit)],
+                many=True
+            ).data
+        return SupportRecipesSerializer(recipes, many=True).data
+
+    def get_recipes_count(self, obj):
+        recipes = Recipes.objects.filter(author=obj.author)
+        return recipes.count()
+
+    def get_is_subscribed(self, obj):
+        return CurrentUserSerializer.get_is_subscribed(self, obj.author)
