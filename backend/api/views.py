@@ -19,7 +19,7 @@ from api.serializers import (CreateRecipesSerializer, GetRecipesSerializer,
 from recipes.models import (AmountIngredients, Favorite, Ingredients, Recipes,
                             ShoppingList, Tags)
 from users.models import CustomUser, Follow
-from users.serializers import SubscribeSerializer
+from users.serializers import SubscribeSerializer, SubscribeListSerializer
 
 
 class TagsViewSet(ListModelMixin, RetrieveModelMixin, viewsets.GenericViewSet):
@@ -129,34 +129,27 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
 class MainSubscribeViewSet(APIView):
     """Подписаться/отписаться на автора рецепта"""
-    serializer_class = SubscribeSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = CustomPagination
 
-    def post(self, request, *args, **kwargs):
-        user_id = self.kwargs.get('user_id')
-        author = get_object_or_404(CustomUser, id=user_id)
-        if user_id == request.user.id:
+    def post(self, request, id):
+        author = get_object_or_404(CustomUser, id=id)
+        is_subscribed = Follow.objects.filter(user=request.user, author=author)
+        if author == request.user:
+            return Response("Нельзя подписаться на самого себя",
+                            status=status.HTTP_400_BAD_REQUEST)
+        elif is_subscribed.exists():
             return Response(
-                {'error': 'Нельзя подписаться на себя'},
+                "Вы уже подписались на этого автора.",
                 status=status.HTTP_400_BAD_REQUEST
             )
-        if Follow.objects.filter(
-                user=request.user,
-                author_id=user_id
-        ).exists():
-            return Response(
-                {'error': 'Вы уже подписаны на пользователя'},
-                status=status.HTTP_400_BAD_REQUEST
+        else:
+            Follow.objects.create(user=request.user, author=author)
+            serializer = SubscribeListSerializer(
+                author,
+                context={'request': 'request'}
             )
-        Follow.objects.create(
-            user=request.user,
-            author_id=user_id
-        )
-        return Response(
-            self.serializer_class(author, context={'request': request}).data,
-            status=status.HTTP_201_CREATED
-        )
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def delete(self, request, *args, **kwargs):
         user_id = self.kwargs.get('user_id')

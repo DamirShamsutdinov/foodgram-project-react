@@ -76,22 +76,3 @@ class SubscribeListSerializer(serializers.ModelSerializer):
         return recipes.count()
 
 
-class SubscribeSerializer(serializers.ModelSerializer):
-    """Сериализатор подписчиков"""
-
-    class Meta:
-        model = Follow
-        fields = ('user', 'author')
-        validators = [
-            UniqueTogetherValidator(
-                queryset=Follow.objects.all(),
-                fields=('user', 'author'),
-                message='Вы уже подписаны на этого автора!'
-            )
-        ]
-
-    def to_representation(self, instance):
-        request = self.context.get('request')
-        context = {'request': request}
-        return SubscribeListSerializer(
-            instance.author, context=context).data
