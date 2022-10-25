@@ -158,35 +158,10 @@ class MainSubscribeViewSet(APIView):
     def delete(self, request, id):
         user = request.user
         author = get_object_or_404(CustomUser, id=id)
-        follow = get_object_or_404(Follow, user=user, author=author, )
+        follow = get_object_or_404(Follow, user=user, author=author)
         follow.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    # def post(self, request, *args, **kwargs):
-    #     user_id = self.kwargs.get("user_id")
-    #     if user_id == request.user.id:
-    #         return Response(
-    #             {"error": "Нельзя подписаться на себя"},
-    #             status=status.HTTP_400_BAD_REQUEST
-    #         )
-    #     if Follow.objects.filter(
-    #             user=request.user,
-    #             author_id=user_id
-    #     ).exists():
-    #         return Response(
-    #             {"error": "Вы уже подписаны на пользователя"},
-    #             status=status.HTTP_400_BAD_REQUEST
-    #         )
-    #     author = get_object_or_404(CustomUser, id=user_id)
-    #     Follow.objects.create(
-    #         user=request.user,
-    #         author_id=user_id
-    #     )
-    #     return Response(
-    #         self.serializer_class(author, context={"request": request}).data,
-    #         status=status.HTTP_201_CREATED
-    #     )
-    #
     # def delete(self, request, *args, **kwargs):
     #     user_id = self.kwargs.get("user_id")
     #     get_object_or_404(CustomUser, id=user_id)
@@ -201,3 +176,6 @@ class MainSubscribeViewSet(APIView):
     #         {"error": "Вы не подписаны на пользователя"},
     #         status=status.HTTP_400_BAD_REQUEST
     #     )
+
+
+
