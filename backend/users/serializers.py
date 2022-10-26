@@ -1,13 +1,14 @@
 from djoser.serializers import UserSerializer
 from rest_framework import serializers
 
+from api.serializers import SupportRecipesSerializer
 from recipes.models import Recipes
 
 from .models import CustomUser, Follow
 
 
 class CurrentUserSerializer(UserSerializer):
-    is_subscribed = serializers.SerializerMethodField()
+    is_subscribed = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = CustomUser
@@ -27,43 +28,6 @@ class CurrentUserSerializer(UserSerializer):
         return Follow.objects.filter(user=request.user, author=obj).exists()
 
 
-class ShortRecipesSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Recipes
-        fields = ("id", "name", "image", "cooking_time")
-
-
-class SubscribeSerializer(serializers.ModelSerializer):
-    is_subscribed = serializers.SerializerMethodField()
-    recipes = serializers.SerializerMethodField()
-    recipes_count = serializers.SerializerMethodField()
-
-    class Meta:
-        model = CustomUser
-        fields = (
-            "email",
-            "id",
-            "username",
-            "first_name",
-            "last_name",
-            "is_subscribed",
-            "recipes",
-            "recipes_count"
-        )
-        read_only_fields = ("is_subscribed", "recipes", "recipes_count")
-
-    def get_recipes(self, obj):
-        recipes = Recipes.objects.filter(author=obj)
-        return ShortRecipesSerializer(recipes, many=True).data
-
-    def get_recipes_count(self, obj):
-        recipes = Recipes.objects.filter(author=obj)
-        return recipes.count()
-
-    def get_is_subscribed(self, obj):
-        return True
-
-
 class SubscribeListSerializer(serializers.ModelSerializer):
     id = serializers.ReadOnlyField(source='author.id')
     username = serializers.ReadOnlyField(source='author.username')
@@ -80,9 +44,8 @@ class SubscribeListSerializer(serializers.ModelSerializer):
                   'is_subscribed', 'recipes', 'recipes_count')
 
     def get_recipes(self, obj):
-        #     recipes = Recipes.objects.filter(author=obj.author)
-        recipes = Recipes.objects.filter(author=obj)
-        return ShortRecipesSerializer(recipes, many=True).data
+        recipes = Recipes.objects.filter(author=obj.author)
+        return SupportRecipesSerializer(recipes, many=True).data
 
     def get_recipes_count(self, obj):
         recipes = Recipes.objects.filter(author=obj.author)
@@ -101,3 +64,27 @@ class SubscribeListSerializer(serializers.ModelSerializer):
     #         return Follow.objects.filter(
     #             user=request.user, author=obj).exists()
     #     return False
+
+
+class SubscribeSerializer(serializers.ModelSerializer):
+    recipes = serializers.SerializerMethodField(read_only=True)
+    recipes_count = serializers.SerializerMethodField(read_only=True)
+    is_subscribed = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = CustomUser
+        fields = ('email', 'id', 'username', 'first_name', 'last_name',
+                  'is_subscribed',
+                  'recipes', 'recipes_count')
+
+    def get_recipes(self, obj):
+        recipes = Recipes.objects.filter(author_id=obj.id)
+        serializer = SupportRecipesSerializer(recipes, many=True)
+        return serializer.data
+
+    def get_recipes_count(self, obj):
+        recipes = Recipes.objects.filter(author_id=obj.id)
+        return recipes.count()
+
+    def get_is_subscribed(self, obj):
+        return True
