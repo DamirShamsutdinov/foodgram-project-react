@@ -141,8 +141,8 @@ class MainSubscribeViewSet(APIView):
     permission_classes = [IsAuthenticated]
     pagination_class = CustomPagination
 
-    def post(self, request, pk):
-        author = get_object_or_404(CustomUser, pk=pk)
+    def post(self, request, id):
+        author = get_object_or_404(CustomUser, id=id)
         is_subscribed = Follow.objects.filter(user=request.user, author=author)
         if author == request.user:
             return Response(
@@ -162,8 +162,8 @@ class MainSubscribeViewSet(APIView):
             )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    def delete(self, request, pk):
-        author = get_object_or_404(CustomUser, pk=pk)
+    def delete(self, request, id):
+        author = get_object_or_404(CustomUser, id=id)
         subscription = Follow.objects.filter(user=request.user, author=author)
         if subscription.exists():
             subscription.delete()
