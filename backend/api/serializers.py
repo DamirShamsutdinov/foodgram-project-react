@@ -47,7 +47,7 @@ class AmountRecipeSerializer(serializers.ModelSerializer):
 
 
 class SupportRecipesSerializer(serializers.ModelSerializer):
-    """Сериализатор рецепта для добавления в Избранное"""
+    """Сериализатор рецепта для добавления"""
 
     class Meta:
         model = Recipes

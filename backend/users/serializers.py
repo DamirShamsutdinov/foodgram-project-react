@@ -27,9 +27,7 @@ class CurrentUserSerializer(UserSerializer):
         return Follow.objects.filter(user=request.user, author=obj).exists()
 
 
-class SupportRecipesSerializer(serializers.ModelSerializer):
-    """Сериализатор рецепта для добавления в Избранное"""
-
+class ShortRecipesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipes
         fields = ("id", "name", "image", "cooking_time")
@@ -56,7 +54,7 @@ class SubscribeSerializer(serializers.ModelSerializer):
 
     def get_recipes(self, obj):
         recipes = Recipes.objects.filter(author=obj)
-        return SupportRecipesSerializer(recipes, many=True).data
+        return ShortRecipesSerializer(recipes, many=True).data
 
     def get_recipes_count(self, obj):
         recipes = Recipes.objects.filter(author=obj)
@@ -84,7 +82,7 @@ class SubscribeListSerializer(serializers.ModelSerializer):
     def get_recipes(self, obj):
         #     recipes = Recipes.objects.filter(author=obj.author)
         recipes = Recipes.objects.filter(author=obj)
-        return SupportRecipesSerializer(recipes, many=True).data
+        return ShortRecipesSerializer(recipes, many=True).data
 
     def get_recipes_count(self, obj):
         recipes = Recipes.objects.filter(author=obj.author)
