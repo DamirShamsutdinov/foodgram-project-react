@@ -1,7 +1,6 @@
 from djoser.serializers import UserSerializer
 from rest_framework import serializers
 
-from api.serializers import SupportRecipesSerializer
 from recipes.models import Recipes
 
 from .models import CustomUser, Follow
@@ -26,6 +25,14 @@ class CurrentUserSerializer(UserSerializer):
         if not request.user.is_authenticated:
             return False
         return Follow.objects.filter(user=request.user, author=obj).exists()
+
+
+class SupportRecipesSerializer(serializers.ModelSerializer):
+    """Сериализатор рецепта для добавления в Избранное"""
+
+    class Meta:
+        model = Recipes
+        fields = ("id", "name", "image", "cooking_time")
 
 
 class SubscribeSerializer(serializers.ModelSerializer):
