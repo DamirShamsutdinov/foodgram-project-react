@@ -138,40 +138,46 @@ class SubscribeListView(ListAPIView):
 
 class MainSubscribeViewSet(APIView):
     """Подписаться/отписаться на автора рецепта"""
+    serializer_class = SubscribeSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = CustomPagination
 
-    def post(self, request, id):
-        author = get_object_or_404(CustomUser, id=id)
-        is_subscribed = Follow.objects.filter(user=request.user, author=author)
-        if author == request.user:
+    def post(self, request, *args, **kwargs):
+        user_id = self.kwargs.get('user_id')
+        if user_id == request.user.id:
             return Response(
-                "Нельзя подписаться на самого себя",
+                {'error': 'Нельзя подписаться на себя'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        elif is_subscribed.exists():
+        if Follow.objects.filter(
+                user=request.user,
+                author_id=user_id
+        ).exists():
             return Response(
-                "Вы уже подписались на автора",
+                {'error': 'Вы уже подписаны на пользователя'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        else:
-            Follow.objects.create(user=request.user, author=author)
-            serializer = SubscribeSerializer(
-                author,
-                context={'request': 'request'}
-            )
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        author = get_object_or_404(CustomUser, id=user_id)
+        Follow.objects.create(
+            user=request.user,
+            author_id=user_id
+        )
+        return Response(
+            self.serializer_class(author, context={'request': request}).data,
+            status=status.HTTP_201_CREATED
+        )
 
-    def delete(self, request, id):
-        author = get_object_or_404(CustomUser, id=id)
-        subscription = Follow.objects.filter(user=request.user, author=author)
-        if subscription.exists():
+    def delete(self, request, *args, **kwargs):
+        user_id = self.kwargs.get('user_id')
+        get_object_or_404(CustomUser, id=user_id)
+        subscription = Follow.objects.filter(
+            user=request.user,
+            author_id=user_id
+        )
+        if subscription:
             subscription.delete()
-            return Response(
-                status=status.HTTP_204_NO_CONTENT
-            )
-        else:
-            return Response(
-                {'error': 'Вы не подписаны на пользователя'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(
+            {'error': 'Вы не подписаны на пользователя'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
